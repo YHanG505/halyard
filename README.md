@@ -1,75 +1,80 @@
-# DeepSeek Harness
+# Halyard
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+Halyard is a community fork of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+by [DeepSeek AI](https://deepseek.com), distributed under the MIT license. The application
+displays itself as **DeepSeek Halyard**.
 
-It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
+> Halyard is an unofficial fork, not affiliated with, sponsored by, or endorsed by DeepSeek.
+> "DeepSeek", "DeepSeek Harness", and the whale mark belong to their owners and are used here
+> only to identify the upstream project.
 
-Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+Halyard keeps the upstream **everything-is-a-plugin** architecture (powered by
+[Cordis](https://github.com/cordiverse/cordis)) and adds:
+
+- a usage panel: account balance, daily spend estimate, and range-based account usage in the sidebar;
+- conversation management: startup settings (new conversation on open, default project), an archive
+  manager with restore and permanent delete, and a copyable session-id chip;
+- a local macOS desktop app that runs this checkout directly (`apps/desktop-live`);
+- fixes on top of upstream `0.1.5-rc.2`, including a stable desktop port so browser-local
+  preferences survive restarts.
+
+Closed turns fold through the product's own transcript compaction. For Codex-style folding of
+consecutive tool calls inside a turn, install the third-party
+[dsh-fold](https://github.com/Yancey2023/dsh-fold) client plugin into a profile — see the Credits section below.
 
 ## Developer preview
 
-DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+Halyard tracks an upstream developer preview that iterates rapidly.
+**THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
 
-Review the [safety notice](SAFETY.md) before running the project.
+Review the upstream [safety notice](SAFETY.md) before running the project.
 
 ## Run
 
-### Run from `npm`
-
-Install `Node.js`, then run:
+Requirements: Node.js `^22.19 || >=24` and pnpm.
 
 ```sh
-npx @deepseek-ai/dsh web
-```
-
-The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass `--no-open` to run the server without opening a browser. See [Web UI guide](docs/user/guide/index.md).
-
-### Run from source
-
-To run from a repository checkout:
-
-```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
 pnpm install
 pnpm run build
 pnpm dsh web
 ```
 
-`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
+`pnpm dsh web` serves the Web UI on `http://127.0.0.1:3080` by default; pass `--no-open` to skip
+opening a browser or `--port <n>` to change the port. Real model runs read `DEEPSEEK_API_KEY` from the
+environment or a root `.env` file.
 
-## Community and support
+### Desktop app (macOS)
 
-- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Development
-
-Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
-
-For agents, follow [AGENTS.md](AGENTS.md).
-
-## Citation
-
-```bibtex
-@misc{deepseek-harness2026,
-  title={DeepSeek Harness: Everything is a Plugin},
-  author={DeepSeek-AI},
-  year={2026},
-  publisher={GitHub},
-  howpublished={\url{https://github.com/deepseek-ai/deepseek-harness}},
-}
+```sh
+node apps/desktop-live/scripts/install-macos.mjs
 ```
+
+The script builds a `DeepSeek Halyard.app` that spawns `pnpm dsh web` from this checkout and opens
+the authenticated URL.
+
+## Documentation
+
+- Upstream documentation: <https://deepseek-harness.github.io/deepseek-harness/>
+- Repository guides: [docs/development.md](docs/development.md), [docs/architecture.md](docs/architecture.md)
+- For agents: [AGENTS.md](AGENTS.md)
+
+## Credits
+
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) by DeepSeek AI — upstream
+  project and the whale mark.
+- [dsh-fold](https://github.com/Yancey2023/dsh-fold) by Yancey2023 (MIT) — optional third-party
+  client plugin that folds consecutive tool calls; it is installed into a profile with
+  `dsh plugin --profile web add github:Yancey2023/dsh-fold` and is not bundled here. Thanks to its
+  author for the standalone folding UI.
+- [Cordis](https://github.com/cordiverse/cordis) and the vendored framework libraries
+  (see [vendor/README.md](vendor/README.md)).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), Copyright (c) 2026 DeepSeek, with modifications by the Halyard contributors
+(see [NOTICE](NOTICE)).
 
-Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Third-party dependencies and their licenses are disclosed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

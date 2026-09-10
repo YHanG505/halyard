@@ -1,0 +1,13 @@
+Halyard
+Copyright (c) 2026 YHanG505 and the Halyard contributors
+
+Halyard is a community fork of DeepSeek Harness
+(https://github.com/deepseek-ai/deepseek-harness), Copyright (c) 2026 DeepSeek,
+distributed under the MIT License. The full upstream license text is in
+LICENSE; modifications distributed in this repository are released under the
+same terms.
+
+"DeepSeek", "DeepSeek Harness", and the DeepSeek whale mark are trademarks or
+brand assets of DeepSeek. Halyard is an unofficial fork, not affiliated with,
+sponsored by, or endorsed by DeepSeek. The name and mark are retained only to
+identify the upstream project.
