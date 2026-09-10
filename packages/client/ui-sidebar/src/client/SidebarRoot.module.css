@@ -130,8 +130,8 @@
 .brandIdentity {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 24px;
+  gap: 10px;
+  height: 32px;
   min-width: 0;
 }
 
@@ -144,18 +144,20 @@
 
 .brandName {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
-  height: 24px;
-  font-size: 18px;
+  height: 32px;
+  font-size: 22px;
   font-weight: 600;
-  line-height: 24px;
-  letter-spacing: 0.04em;
+  line-height: 26px;
+  letter-spacing: 0.02em;
 }
 
 .fallbackBrandName {
-  font-size: 17px;
+  font-size: 21px;
   letter-spacing: 0px;
   white-space: nowrap;
 }
@@ -172,9 +174,10 @@
 }
 
 .localBuildTitle {
-  font-size: 12px;
-  line-height: 13px;
-  letter-spacing: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.01em;
 }
 
 .iconButton {
@@ -233,15 +236,15 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  height: 10px;
-  padding: 0 3px;
-  border-radius: 2px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
   color: var(--dsw-alias-label-primary-inverted);
   background: var(--dsw-alias-label-primary);
   font-family: var(--ds-font-family-code);
-  font-size: 6px;
-  font-weight: 500;
-  line-height: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
   white-space: nowrap;
 }
 
