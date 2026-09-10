@@ -16,7 +16,7 @@ import {
   buildRebuildSpawn,
   DEFAULT_HOST,
   parseWebReadyLine,
-  pickFreePort,
+  pickStablePort,
   PRODUCT_TITLE,
   resolveRepoRoot,
   shouldRebuild,
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
     await runToCompletion(buildRebuildSpawn(repoRoot))
   }
 
-  const port = await pickFreePort(DEFAULT_HOST)
+  const port = await pickStablePort(DEFAULT_HOST)
   const plan = buildDshWebSpawn(repoRoot, port, DEFAULT_HOST)
   console.log(`dsh-desktop: starting ${plan.command} ${plan.args.join(' ')} in ${plan.cwd}`)
   server = spawnServer(plan)

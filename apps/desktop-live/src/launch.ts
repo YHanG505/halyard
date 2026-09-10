@@ -14,6 +14,13 @@ export const PRODUCT_TITLE = 'DeepSeek Harness'
 /** Default bind host for the spawned `dsh web` server. */
 export const DEFAULT_HOST = '127.0.0.1'
 
+/**
+ * Preferred loopback port for the spawned `dsh web` server. Browser-local
+ * preferences (localStorage) are origin-scoped, so a port that changes per
+ * launch presents a fresh, empty origin and silently drops them.
+ */
+export const APP_PORT = 47654
+
 /** Filesystem operations injected into pure path helpers for unit tests. */
 export interface LaunchFs {
   /** Whether a path exists as a readable file or directory entry. */
@@ -77,27 +84,56 @@ export function resolveRepoRoot(
 }
 
 /**
+ * Probe one loopback port by binding and releasing it.
+ * @param host - bind address.
+ * @param port - port to bind; 0 selects an ephemeral port.
+ * @returns the bound port.
+ */
+function probePort(host: string, port: number): Promise<number> {
+  return new Promise((resolvePort, reject) => {
+    const server = createServer()
+    server.once('error', reject)
+    server.listen(port, host, () => {
+      const address = server.address()
+      if (address === null || typeof address === 'string') {
+        server.close(() => { reject(new Error('probePort: unexpected server address')) })
+        return
+      }
+      const bound = address.port
+      server.close((error) => {
+        if (error) reject(error)
+        else resolvePort(bound)
+      })
+    })
+  })
+}
+
+/**
  * Bind an ephemeral loopback port and return it after the listener closes.
  * @param host - bind address; defaults to 127.0.0.1.
  * @returns a port that was free at sample time.
  */
 export async function pickFreePort(host: string = DEFAULT_HOST): Promise<number> {
-  return new Promise((resolvePort, reject) => {
-    const server = createServer()
-    server.once('error', reject)
-    server.listen(0, host, () => {
-      const address = server.address()
-      if (address === null || typeof address === 'string') {
-        server.close(() => { reject(new Error('pickFreePort: unexpected server address')) })
-        return
-      }
-      const { port } = address
-      server.close((error) => {
-        if (error) reject(error)
-        else resolvePort(port)
-      })
-    })
-  })
+  return probePort(host, 0)
+}
+
+/**
+ * Keep the stable app port when it is free, else fall back to an ephemeral
+ * one. The stable origin is what lets browser-local preferences survive an
+ * app restart.
+ * @param host - bind address; defaults to 127.0.0.1.
+ * @param preferred - port to keep when free; defaults to APP_PORT.
+ * @returns the port the web server should bind.
+ */
+export async function pickStablePort(
+  host: string = DEFAULT_HOST,
+  preferred: number = APP_PORT,
+): Promise<number> {
+  try {
+    return await probePort(host, preferred)
+  } catch {
+    return pickFreePort(host)
+  }
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   DEFAULT_HOST,
   parseWebReadyLine,
   pickFreePort,
+  pickStablePort,
   PRODUCT_TITLE,
   resolveRepoRoot,
   shouldRebuild,
@@ -78,6 +79,32 @@ describe('pickFreePort', () => {
     await new Promise<void>((resolveClose, reject) => {
       probe.close((error) => { if (error) reject(error); else resolveClose() })
     })
+  })
+})
+
+describe('pickStablePort', () => {
+  it('keeps the preferred port when it is free', async () => {
+    const preferred = await pickFreePort()
+    await expect(pickStablePort(DEFAULT_HOST, preferred)).resolves.toBe(preferred)
+  })
+
+  it('falls back to an ephemeral port when the preferred one is taken', async () => {
+    const held: Server = createServer()
+    await new Promise<void>((resolveListen, reject) => {
+      held.once('error', reject)
+      held.listen(0, DEFAULT_HOST, () => { resolveListen() })
+    })
+    const address = held.address()
+    if (address === null || typeof address === 'string') throw new Error('no bound address')
+    try {
+      const port = await pickStablePort(DEFAULT_HOST, address.port)
+      expect(port).not.toBe(address.port)
+      expect(port).toBeGreaterThan(0)
+    } finally {
+      await new Promise<void>((resolveClose, reject) => {
+        held.close((error) => { if (error) reject(error); else resolveClose() })
+      })
+    }
   })
 })
 
