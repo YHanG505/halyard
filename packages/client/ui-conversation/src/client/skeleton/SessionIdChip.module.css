@@ -1,0 +1,48 @@
+/* Session-id chip: capsule outline; hover inverts to a solid fill; click
+   copies and pops a transient toast above the chip. */
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 180px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--ds-font-family-code);
+  font-size: 11px;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.id {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.toast {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+}

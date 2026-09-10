@@ -321,6 +321,10 @@ export class ClientSessions implements ISessions {
    * Refresh the real Session baseline, reusing an in-flight pull.
    * @returns completion of the current or newly started baseline pull.
    */
+  delete(id: SessionId): Promise<void> {
+    return this.manager.delete(id)
+  }
+
   refresh(): Promise<void> {
     return this.manager.refreshList()
   }

@@ -39,6 +39,8 @@ import type {
   SessionCancelValue,
   SessionCreateRequest,
   SessionCreateValue,
+  SessionDeleteRequest,
+  SessionDeleteValue,
   SessionForkRequest,
   SessionForkValue,
   SessionPromptRequest,
@@ -300,6 +302,29 @@ export class SessionCommandController {
       }
     }
     return { sessionId: childId }
+  }
+
+  /**
+   * Permanently remove one stored Session. Live sessions must be closed first;
+   * the durable artifacts and their derived caches are removed together.
+   * @param request - Session identity to delete.
+   * @returns acknowledgement after removal.
+   */
+  async delete(request: SessionDeleteRequest): Promise<SessionDeleteValue> {
+    const { sessionId } = request
+    if (this.ctx.sessions.get(sessionId) !== undefined || this.ctx.agents.get(sessionId) !== undefined) {
+      throw new RemoteError(
+        'session/delete-live',
+        `session "${sessionId}" is live; close it before deleting`,
+        { sessionId },
+      )
+    }
+    const persistence = this.ctx.get('sessionPersistence')
+    const deleted = persistence === undefined ? false : await persistence.delete(sessionId)
+    if (!deleted) {
+      throw new RemoteError('session/not-found', `session "${sessionId}" was not found in storage`, { sessionId })
+    }
+    return { deleted: true }
   }
 
   /**

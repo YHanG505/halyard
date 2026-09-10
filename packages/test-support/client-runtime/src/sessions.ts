@@ -198,7 +198,7 @@ export class TestSessions implements ISessions {
   /** Calls observed on the service-level face, newest last. */
   readonly calls: {
     method: 'create' | 'open' | 'openSubagent' | 'setSubagentCatalogOpen' | 'refreshSubagents'
-      | 'clear' | 'refresh' | 'search' | 'fork'
+      | 'clear' | 'refresh' | 'search' | 'fork' | 'delete'
     args: unknown[]
   }[] = []
 
@@ -483,6 +483,16 @@ export class TestSessions implements ISessions {
   refresh(): Promise<void> {
     this.calls.push({ method: 'refresh', args: [] })
     return Promise.resolve()
+  }
+
+  /**
+   * Record a permanent Session deletion; fixture callers publish list state
+   * explicitly, so the default only drops the row.
+   * @param id - session to delete.
+   */
+  async delete(id: SessionId): Promise<void> {
+    this.calls.push({ method: 'delete', args: [id] })
+    await this.remove(id)
   }
 
   /**

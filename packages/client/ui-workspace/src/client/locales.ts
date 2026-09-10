@@ -69,6 +69,17 @@ export const zh = {
   'time.months': '{n}个月',
   'time.years': '{n}年',
   'time.ago': '{t}前',
+  'archived.nav': '归档对话',
+  'archived.title': '归档对话',
+  'archived.empty': '暂无归档对话。',
+  'archived.updated': '最后更新',
+  'archived.untitled': '未命名对话',
+  'archived.restore': '恢复',
+  'archived.delete': '删除',
+  'archived.confirmDelete': '确认删除',
+  'archived.cancel': '取消',
+  'archived.restoreFailed': '恢复失败',
+  'archived.deleteFailed': '删除失败',
 } satisfies Record<string, string>
 
 /** The workspace namespace key union. */
@@ -139,4 +150,15 @@ export const en = {
   'time.months': '{n}mo',
   'time.years': '{n}y',
   'time.ago': '{t} ago',
+  'archived.nav': 'Archived',
+  'archived.title': 'Archived conversations',
+  'archived.empty': 'No archived conversations.',
+  'archived.updated': 'Last updated',
+  'archived.untitled': 'Untitled conversation',
+  'archived.restore': 'Restore',
+  'archived.delete': 'Delete',
+  'archived.confirmDelete': 'Confirm delete',
+  'archived.cancel': 'Cancel',
+  'archived.restoreFailed': 'Restore failed',
+  'archived.deleteFailed': 'Delete failed',
 } satisfies Record<WorkspaceKey, string>

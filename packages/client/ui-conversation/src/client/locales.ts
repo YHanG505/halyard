@@ -168,6 +168,8 @@ export const zh = {
   'terminal.expandRest': '… 其余 {n} 行',
   'terminal.sendInput': '（发送输入）',
   'terminal.session': '终端 {sessionId}',
+  'sessionId.copyTitle': '复制 Session ID',
+  'sessionId.copied': '已复制',
 } satisfies Record<string, string>
 
 /** The conversation namespace key union. */
@@ -336,4 +338,6 @@ export const en = {
   // aligned with these English values.
   'terminal.sendInput': '(send input)',
   'terminal.session': 'Terminal {sessionId}',
+  'sessionId.copyTitle': 'Copy Session ID',
+  'sessionId.copied': 'Copied',
 } satisfies Record<ConversationKey, string>

@@ -205,6 +205,7 @@ export class FakeApiClient {
       },
       session: {
         canOpenWorkspacePath: () => Promise.resolve(ok(true)),
+        delete: payload => this.record('session.delete', payload, Promise.resolve(ok({ deleted: true as const }))),
         list: payload => this.record('session.list', payload, this.onList(payload)),
         modelCatalog: () => Promise.resolve({
           ok: true,
@@ -271,6 +272,11 @@ export class FakeApiClient {
           'workspace.archiveSession',
           payload,
           this.onWorkspaceArchiveSession(payload),
+        ),
+        unarchiveSession: payload => this.record(
+          'workspace.unarchiveSession',
+          payload,
+          Promise.resolve(ok({ archivedSessionIds: [] as never[] })),
         ),
         follow: signal => this.openWorkspace(signal),
       },

@@ -200,6 +200,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
       readonly existingPreset?: string
     }
     'agent-preset/unavailable': { readonly preset?: string }
+    'session/delete-live': { readonly sessionId: SessionId }
     'session/attachment-invalid': { readonly reason: string }
     'session/queue-item-not-found': { readonly itemId: MessageId }
     'session/steer-unavailable': { readonly itemId: MessageId }
@@ -309,6 +310,16 @@ export interface SessionForkRequest {
 /** Identity of a newly forked Session. */
 export interface SessionForkValue {
   readonly sessionId: SessionId
+}
+
+/** Permanent removal of one stored Session. */
+export interface SessionDeleteRequest {
+  readonly sessionId: SessionId
+}
+
+/** Outcome of one Session deletion. */
+export interface SessionDeleteValue {
+  readonly deleted: true
 }
 
 /** Session prompt request. */

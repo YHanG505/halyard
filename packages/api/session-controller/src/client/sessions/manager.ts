@@ -593,6 +593,17 @@ export class SessionManager {
    * @param opts - source session and the optional seq anchoring the cut.
    * @returns the fork result (the child session id).
    */
+  /**
+   * Permanently delete one stored Session and drop it from the list.
+   * @param id - Session to delete.
+   */
+  async delete(id: SessionId): Promise<void> {
+    const result = await this.remote.session.delete({ sessionId: id })
+    if (!result.ok) throw new Error(`session delete failed: ${result.error.message}`)
+    this.recordMutation({ kind: 'remove', sessionId: id })
+    await this.refreshList()
+  }
+
   async fork(
     opts: { sessionId: SessionId; atSeq?: SessionSeq; agentPreset?: string },
   ): Promise<RemoteResult<{ sessionId: SessionId }>> {

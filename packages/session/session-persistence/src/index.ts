@@ -100,6 +100,12 @@ export interface SessionPersistenceStatOptions {
   readonly signal?: AbortSignal
 }
 
+/** Options for {@link SessionPersistence.delete}. */
+export interface SessionPersistenceDeleteOptions {
+  /** Optional cancellation for backend removal work. */
+  readonly signal?: AbortSignal
+}
+
 /** Options for {@link SessionPersistence.list}. */
 export interface SessionPersistenceListOptions {
   /** Optional cancellation for backend listing work. */
@@ -196,6 +202,17 @@ export abstract class SessionPersistence extends Service {
    * @returns one snapshot per stored session.
    */
   abstract list(options?: SessionPersistenceListOptions): Promise<readonly SessionPersistenceSnapshot[]>
+
+  /**
+   * Delete one stored Session's durable artifacts. Backends without removal
+   * support keep the default `false`, which callers treat as unsupported.
+   * @param id - the stored session to delete.
+   * @param options - optional cancellation.
+   * @returns true when the session existed and its artifacts were removed.
+   */
+  async delete(_id: SessionId, _options?: SessionPersistenceDeleteOptions): Promise<boolean> {
+    return false
+  }
 }
 
 export default SessionPersistence

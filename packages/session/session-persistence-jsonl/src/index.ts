@@ -27,7 +27,7 @@ import {
   type SessionHandleReadResult,
   type SessionLocation, type SessionPersistenceCreateOptions,
   type SessionPersistenceListOptions, type SessionPersistenceOpenOptions,
-  type SessionPersistenceSnapshot, type SessionPersistenceStatOptions,
+  type SessionPersistenceDeleteOptions, type SessionPersistenceSnapshot, type SessionPersistenceStatOptions,
   type SessionPersistenceRevision as PersistenceRevision,
 } from '@deepseek-ai/dsh-session-persistence'
 import { JsonlBackendTracker, JsonlSessionHandle, type StorageHandleState } from './storage.ts'
@@ -970,6 +970,16 @@ class JsonlSessionPersistence extends SessionPersistence {
     } finally {
       decoder.close()
     }
+  }
+
+  override async delete(id: SessionId, options?: SessionPersistenceDeleteOptions): Promise<boolean> {
+    options?.signal?.throwIfAborted()
+    const snapshot = await this.stat(id)
+    if (snapshot === undefined) return false
+    this.coldLogMemo.delete(id)
+    this.migrationPreparations.delete(id)
+    await rm(sessionDir(this.root, snapshot.header.cwd, id), { recursive: true, force: true })
+    return true
   }
 
   private async listArtifacts(signal?: AbortSignal): Promise<Array<{ header: SessionHeader; path: string }>> {

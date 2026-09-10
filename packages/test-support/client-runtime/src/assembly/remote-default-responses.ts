@@ -30,6 +30,16 @@ export const remoteDefaultResponses: RemoteTable = {
     'dynamicCordisRunner/inventory': ok([]),
     // ui-settings-plugins web-search card `readCredential()` when the settings mirror first publishes.
     'credentials/describe': ok({}),
+    // ui-usage settings section and sidebar card on first mount.
+    'usage/summary': ok({
+      range: 'today',
+      generatedAt: 0,
+      totals: { requests: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, estimatedCostCny: 0 },
+      byModel: [],
+      byDay: [],
+    }),
+    // ui-usage balance card; unavailable is a first-class default.
+    'usage/balance': ok({ isAvailable: false, reason: 'missing-credential' }),
   },
   // Stream endpoints the roster opens later than boot; declared so a spec that forgets the script gets a stream miss.
   streams: [

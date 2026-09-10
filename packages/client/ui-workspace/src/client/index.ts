@@ -24,6 +24,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 // Type-only: pulls the Session root standard-hook merge.
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type { WorkspaceBrowserInjected, WorkspacePickerInjected } from './contract/slots.ts'
+import { ArchivedSessionsSection, type ArchivedSessionsInjected } from './ArchivedSessionsSection.tsx'
 import { UiWorkspaceService } from './navigation.ts'
 import { createWorkspaceViewStore } from './stores.ts'
 import { WorkspaceBrowser } from './rows/WorkspaceBrowser.tsx'
@@ -132,6 +133,20 @@ export function apply(ctx: Context): void {
     createWorkspace: input => workspaces.create(input),
     hooks: { directoryFlow: browserFlowSource, hostInfo },
   })
+  const archivedInjected = (): ArchivedSessionsInjected => ({
+    restore: async (sessionId) => { await uiWorkspace.unarchiveSession(sessionId) },
+    remove: async (sessionId) => { await sessions.delete(sessionId) },
+  })
+  const settingsLabel = ctx.locale.bind(NS)
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'archived',
+    order: 40,
+    label: () => settingsLabel('archived.nav'),
+    locale: NS,
+    inject: archivedInjected,
+  }, ArchivedSessionsSection))
+
   const pickerInjected = (): WorkspacePickerInjected => ({
     createWorkspace: input => workspaces.create(input),
     hooks: { directoryFlow: pickerFlowSource },

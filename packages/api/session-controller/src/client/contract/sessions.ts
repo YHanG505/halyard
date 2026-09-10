@@ -74,6 +74,11 @@ export interface ISessions {
    */
   refresh(): Promise<void>
   /**
+   * Permanently delete one stored Session; a live Session is refused.
+   * @param id - Session to delete.
+   */
+  delete(id: SessionId): Promise<void>
+  /**
    * Search the Host's visible message-content index. Results stay
    * request-local; the list snapshot remains the metadata authority.
    * @param query - non-blank literal phrase.
