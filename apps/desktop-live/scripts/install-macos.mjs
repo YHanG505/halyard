@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = resolve(packageDir, '../..')
-const appName = 'DeepSeek Harness'
+const appName = 'DeepSeek Halyard'
 const appDirName = `${appName}.app`
 const outRoot = join(packageDir, 'dist-macos')
 const appRoot = join(outRoot, appDirName)
@@ -80,7 +80,7 @@ const plist = join(appRoot, 'Contents/Info.plist')
 for (const [key, value] of Object.entries({
   CFBundleDisplayName: appName,
   CFBundleName: appName,
-  CFBundleIdentifier: 'com.deepseek.dsh-desktop',
+  CFBundleIdentifier: 'io.github.yhang505.halyard',
   CFBundleIconFile: 'icon.icns',
 })) {
   const result = spawnSync('/usr/bin/plutil', ['-replace', key, '-string', value, plist], { stdio: 'inherit' })

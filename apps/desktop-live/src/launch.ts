@@ -9,7 +9,7 @@ import { createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 
 /** Product title used by the BrowserWindow and document.title. */
-export const PRODUCT_TITLE = 'DeepSeek Harness'
+export const PRODUCT_TITLE = 'DeepSeek Halyard'
 
 /** Default bind host for the spawned `dsh web` server. */
 export const DEFAULT_HOST = '127.0.0.1'

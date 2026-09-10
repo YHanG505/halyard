@@ -1,5 +1,5 @@
 /**
- * Electron main process for the DeepSeek Harness desktop shell.
+ * Electron main process for the Halyard desktop shell.
  * Owns window chrome only: it spawns the live `dsh web` server from the
  * resolved repository, waits for health, loads the URL, and tears the child
  * process tree down on quit.

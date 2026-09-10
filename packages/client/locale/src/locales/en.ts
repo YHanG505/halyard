@@ -30,7 +30,7 @@ export const en = {
   'collapse': 'Collapse',
   'expand': 'Expand',
   'back': 'Back',
-  'brand.localBuild': 'DeepSeek Harness',
+  'brand.localBuild': 'DeepSeek Halyard',
   'unknown': 'Unknown',
   'none': 'None',
   'truncated': 'Truncated',

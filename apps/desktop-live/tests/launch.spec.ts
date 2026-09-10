@@ -186,7 +186,7 @@ describe('waitForHealth', () => {
 })
 
 describe('product title', () => {
-  it('is DeepSeek Harness', () => {
-    expect(PRODUCT_TITLE).toBe('DeepSeek Harness')
+  it('is DeepSeek Halyard', () => {
+    expect(PRODUCT_TITLE).toBe('DeepSeek Halyard')
   })
 })
