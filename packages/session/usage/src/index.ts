@@ -12,6 +12,7 @@ import s from '@deepseek-ai/schemastery'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 import { fetchBalance } from './balance.ts'
+import { estimateAccountSpendToday, readBalanceHistory, recordBalanceSample } from './account-usage.ts'
 import {
   collectUsageSamples,
   foldUsageSummary,
@@ -148,12 +149,18 @@ export class UsageService extends TypertRemoteService {
   @Remote('summary')
   async summary(request: UsageSummaryRequest): Promise<UsageSummary> {
     const now = Date.now()
+    if (request.refresh === true) {
+      this.summaryCache.clear()
+      this.cachedSamples = null
+    }
     const cached = this.summaryCache.get(request.range)
     if (cached !== undefined && now - cached.generatedAt < SUMMARY_CACHE_TTL_MS) {
       return cached.summary
     }
     const samples = await this.loadSamples(now)
-    const summary = foldUsageSummary(request.range, samples, this.pricingTable, now)
+    const folded = foldUsageSummary(request.range, samples, this.pricingTable, now)
+    const account = estimateAccountSpendToday(readBalanceHistory(), now)
+    const summary: UsageSummary = account === undefined ? folded : { ...folded, account }
     this.summaryCache.set(request.range, { generatedAt: now, summary })
     return summary
   }
@@ -168,7 +175,11 @@ export class UsageService extends TypertRemoteService {
     const credentials = this.ctx.get('credentials')
     if (credentials === undefined) return { isAvailable: false, reason: 'missing-credential' }
     const resolved = await credentials.resolve(this.apiKeyRef)
-    return await fetchBalance(this.baseURL, resolved?.value)
+    const info = await fetchBalance(this.baseURL, resolved?.value)
+    if (info.isAvailable) {
+      recordBalanceSample({ time: Date.now(), currency: info.currency ?? 'CNY', totalBalance: info.totalBalance })
+    }
+    return info
   }
 
   /**

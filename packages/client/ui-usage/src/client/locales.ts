@@ -42,6 +42,13 @@ export const en = {
   share: 'Share',
   totalCost: 'Total cost',
   balanceAvailable: 'Available',
+  refresh: 'Refresh',
+  refreshing: 'Refreshing…',
+  accountToday: 'Account spend today',
+  accountSince: 'estimated from balance since {time}',
+  accountHint: 'Estimated from balance changes; covers every app',
+  platformUsage: 'Platform usage',
+  localScope: 'Local DSH',
 }
 
 /** Chinese copy; the product's primary language. */
@@ -86,6 +93,13 @@ export const zh: typeof en = {
   share: '占比',
   totalCost: '总费用',
   balanceAvailable: '可用余额',
+  refresh: '刷新',
+  refreshing: '正在刷新…',
+  accountToday: '今日账号消耗',
+  accountSince: '自 {time} 起按余额变动估算',
+  accountHint: '打开应用后按余额变动估算，覆盖所有应用',
+  platformUsage: '平台用量',
+  localScope: '本机 DSH',
 }
 
 /** Dictionary keys exported for the section inject face. */

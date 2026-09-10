@@ -20,6 +20,16 @@ export interface UsageSummary {
   readonly byModel: readonly UsageModelRow[]
   /** Per-day fold (Beijing calendar dates), ordered ascending. */
   readonly byDay: readonly UsageDayRow[]
+  /** Account-wide spend estimate from balance snapshots, when a reference exists. */
+  readonly account?: AccountSpendEstimate
+}
+
+/** Account-wide spend estimated from balance snapshots (all clients of the account). */
+export interface AccountSpendEstimate {
+  /** Estimated spend in CNY; never negative (a top-up clamps to zero). */
+  readonly spentCny: number
+  /** Epoch milliseconds of the reference snapshot the estimate starts from. */
+  readonly since: number
 }
 
 /** Aggregate token counts and estimated CNY cost. */
@@ -55,6 +65,8 @@ export interface UsageDayRow {
 /** Read the usage summary for one window. */
 export interface UsageSummaryRequest {
   readonly range: UsageRange
+  /** Drop the process caches and recompute from the durable logs. */
+  readonly refresh?: boolean
 }
 
 /** Successful balance read (official `GET /user/balance`). */
@@ -80,5 +92,8 @@ export interface BalanceUnavailable {
 /** Account balance result; unavailability is a first-class outcome. */
 export type BalanceInfo = BalanceAvailable | BalanceUnavailable
 
-/** No request body for the balance read. */
-export type BalanceRequest = Record<string, never>
+/** Balance read options; the read is never cached. */
+export interface BalanceRequest {
+  /** Accepted for symmetry with the summary's refresh flag. */
+  readonly refresh?: boolean
+}

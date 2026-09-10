@@ -1,7 +1,8 @@
 /**
- * Sidebar usage card: today's estimated spend and the remaining account
- * balance, with a top-up jump. Registered into `sidebar.footer.action` so it
- * sits directly above the Settings row in both sidebar widths.
+ * Sidebar usage card: today's account-wide spend estimated from balance
+ * snapshots, the remaining balance, and a top-up jump. Registered into
+ * `sidebar.footer.action` so it sits directly above the Settings row in both
+ * sidebar widths.
  */
 
 import { useCallback, useEffect, useState } from 'react'
@@ -31,14 +32,16 @@ export function UsageSidebarCard(props: UsageSidebarCardProps) {
   const wide = props.wide ?? true
   const [summary, setSummary] = useState<UsageSummary | null>(null)
   const [balance, setBalance] = useState<BalanceInfo | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (remote === undefined) return
     try {
-      const [carriedSummary, carriedBalance] = await Promise.all([
-        remote.summary({ range: 'today' }),
-        remote.balance(),
-      ])
+      // Balance first: its fresh snapshot feeds the account-wide estimate.
+      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance())
+      const carriedSummary = await (force
+        ? remote.summary({ range: 'today', refresh: true })
+        : remote.summary({ range: 'today' }))
       if (carriedSummary.ok) setSummary(carriedSummary.value)
       if (carriedBalance.ok) setBalance(carriedBalance.value)
     } catch {
@@ -59,7 +62,8 @@ export function UsageSidebarCard(props: UsageSidebarCardProps) {
 
   if (t === undefined || remote === undefined) return null
 
-  const cost = summary === null ? null : formatCny(summary.totals.estimatedCostCny)
+  const account = summary?.account
+  const localCost = summary === null ? null : formatCny(summary.totals.estimatedCostCny)
   const tokens = summary === null
     ? null
     : formatTokens(summary.totals.inputTokens + summary.totals.outputTokens)
@@ -84,13 +88,36 @@ export function UsageSidebarCard(props: UsageSidebarCardProps) {
   return (
     <div className={styles.card} data-testid="usage-sidebar-card">
       <div className={styles.row}>
-        <span className={styles.label}>{t('sidebarToday')}</span>
-        <span className={styles.value}>{cost ?? '—'}</span>
+        <span className={styles.label}>
+          {account === undefined ? t('sidebarToday') : t('accountToday')}
+        </span>
+        <span className={styles.valueRow}>
+          <span className={styles.value}>{account === undefined ? (localCost ?? '—') : formatCny(account.spentCny)}</span>
+          <button
+            type="button"
+            className={styles.refreshMini}
+            onClick={() => {
+              setRefreshing(true)
+              void load(true).finally(() => { setRefreshing(false) })
+            }}
+            disabled={refreshing}
+            title={t('refresh')}
+            aria-label={t('refresh')}
+            data-testid="usage-sidebar-refresh"
+          >
+            <span
+              className={refreshing ? `${styles.refreshIcon} ${styles.spinning}` : styles.refreshIcon}
+              aria-hidden="true"
+            >
+              ↻
+            </span>
+          </button>
+        </span>
       </div>
       <div className={styles.sub}>
-        {summary === null
-          ? t('sidebarNoUsage')
-          : `${summary.totals.requests} ${t('requests')} · ${tokens ?? '0'} ${t('tokens')}`}
+        {account === undefined
+          ? (summary === null ? t('sidebarNoUsage') : `${summary.totals.requests} ${t('requests')} · ${tokens ?? '0'} ${t('tokens')}`)
+          : `${t('localScope')} ${localCost ?? '—'}`}
       </div>
       <div className={styles.divider} />
       <div className={styles.row}>

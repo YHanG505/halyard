@@ -6,6 +6,7 @@
 
 import { useState } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-workspace GlobalStandardProps merge (useWorkspaces).
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { SettingsKey } from './locales.ts'
@@ -42,16 +43,11 @@ export function NewSessionOnOpenRow({ read, write, t }: StartupRowsProps) {
         <div className={css.title}>{t('startup.newSession.title')}</div>
         <div className={css.desc}>{t('startup.newSession.desc')}</div>
       </div>
-      <label className={css.switch}>
-        <input
-          type="checkbox"
-          aria-label={t('startup.newSession.title')}
-          checked={settings.newSessionOnOpen}
-          onChange={toggle}
-          data-testid="startup-new-session-toggle"
-        />
-        <span className={css.track} aria-hidden="true"><span className={css.knob} /></span>
-      </label>
+      <Switch
+        checked={settings.newSessionOnOpen}
+        onChange={() => { toggle() }}
+        label={t('startup.newSession.title')}
+      />
     </div>
   )
 }
@@ -89,16 +85,11 @@ export function DefaultProjectRow({ read, write, useWorkspaces, t }: StartupRows
           </select>
         )}
       </div>
-      <label className={css.switch}>
-        <input
-          type="checkbox"
-          aria-label={t('startup.defaultProject.title')}
-          checked={settings.useDefaultWorkspace}
-          onChange={() => { setSettings(write({ useDefaultWorkspace: !settings.useDefaultWorkspace })) }}
-          data-testid="startup-default-project-toggle"
-        />
-        <span className={css.track} aria-hidden="true"><span className={css.knob} /></span>
-      </label>
+      <Switch
+        checked={settings.useDefaultWorkspace}
+        onChange={() => { setSettings(write({ useDefaultWorkspace: !settings.useDefaultWorkspace })) }}
+        label={t('startup.defaultProject.title')}
+      />
     </div>
   )
 }

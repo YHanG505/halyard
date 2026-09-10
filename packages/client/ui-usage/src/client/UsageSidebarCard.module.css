@@ -1,5 +1,8 @@
 .card {
-  margin: 0 12px 8px;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 8px;
   padding: 10px 12px;
   border: 1px solid var(--dsw-alias-border-l1);
   border-radius: 12px;
@@ -14,6 +17,41 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
+}
+
+.valueRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.refreshMini {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.refreshMini:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.refreshIcon {
+  display: inline-block;
+}
+
+.spinning {
+  animation: usage-card-spin 0.9s linear infinite;
+}
+
+@keyframes usage-card-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .label {

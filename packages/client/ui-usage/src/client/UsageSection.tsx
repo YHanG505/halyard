@@ -18,8 +18,8 @@ import styles from './UsageSection.module.css'
  * value in {@link RemoteResult}; carrier failures arrive as `ok: false`.
  */
 export interface UsageRemote {
-  summary: (request: { range: UsageRange }) => Promise<RemoteResult<UsageSummary>>
-  balance: () => Promise<RemoteResult<BalanceInfo>>
+  summary: (request: { range: UsageRange; refresh?: boolean }) => Promise<RemoteResult<UsageSummary>>
+  balance: (request?: { refresh?: boolean }) => Promise<RemoteResult<BalanceInfo>>
 }
 
 /** Injected dependencies of {@link UsageSection}. */
@@ -126,15 +126,16 @@ export function UsageSection(props: UsageSectionProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (remote === undefined || t === undefined) return
     setLoading(true)
     setError(null)
     try {
-      const [carriedSummary, carriedBalance] = await Promise.all([
-        remote.summary({ range }),
-        remote.balance(),
-      ])
+      // Balance first: its fresh snapshot feeds the account-wide estimate.
+      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance())
+      const carriedSummary = await (force
+        ? remote.summary({ range, refresh: true })
+        : remote.summary({ range }))
       if (!carriedSummary.ok || !carriedBalance.ok) {
         setError(t('loadFailed'))
         return
@@ -158,8 +159,28 @@ export function UsageSection(props: UsageSectionProps) {
 
   return (
     <div className={styles.section} data-testid="usage-section">
-      <h2 className={styles.title}>{t('title')}</h2>
-      <p className={styles.intro}>{t('intro')}</p>
+      <div className={styles.titleRow}>
+        <div>
+          <h2 className={styles.title}>{t('title')}</h2>
+          <p className={styles.intro}>{t('intro')}</p>
+        </div>
+        <button
+          type="button"
+          className={styles.refreshButton}
+          onClick={() => { void load(true) }}
+          disabled={loading}
+          title={t('refresh')}
+          aria-label={t('refresh')}
+          data-testid="usage-refresh"
+        >
+          <span
+            className={loading ? `${styles.refreshIcon} ${styles.spinning}` : styles.refreshIcon}
+            aria-hidden="true"
+          >
+            ↻
+          </span>
+        </button>
+      </div>
 
       <div className={styles.rangeRow} role="group" aria-label={t('title')}>
         {RANGES.map(({ value, labelKey }) => (
@@ -176,21 +197,37 @@ export function UsageSection(props: UsageSectionProps) {
       </div>
 
       <div className={styles.heroGrid}>
+        <section className={styles.heroCard} aria-label={t('accountToday')}>
+          <h3 className={styles.cardTitle}>{t('accountToday')}</h3>
+          {summary?.account === undefined ? (
+            <>
+              <p className={styles.heroAmount}>—</p>
+              <p className={styles.balanceMeta}>{t('accountHint')}</p>
+            </>
+          ) : (
+            <>
+              <p className={styles.heroAmount}>{formatCny(summary.account.spentCny)}</p>
+              <p className={styles.balanceMeta}>
+                {t('accountSince').replace('{time}', new Date(summary.account.since)
+                  .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }))}
+              </p>
+            </>
+          )}
+          <a
+            className={styles.platformLink}
+            href="https://platform.deepseek.com/usage"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('platformUsage')}
+          </a>
+        </section>
+
         <section className={styles.heroCard} aria-label={t('balanceTitle')}>
           <h3 className={styles.cardTitle}>{t('balanceAvailable')}</h3>
           {balance?.isAvailable === true ? (
             <>
               <p className={styles.heroAmount}>{formatCny(balance.totalBalance)}</p>
-              <div className={styles.splitTrack} aria-hidden="true">
-                <div
-                  className={styles.splitCharged}
-                  style={{
-                    width: `${balance.totalBalance > 0
-                      ? Math.min(100, (balance.chargedBalance / balance.totalBalance) * 100)
-                      : 0}%`,
-                  }}
-                />
-              </div>
               <p className={styles.balanceMeta}>
                 {t('chargedBalance')} {formatCny(balance.chargedBalance)}
                 {' · '}
@@ -214,7 +251,7 @@ export function UsageSection(props: UsageSectionProps) {
         </section>
 
         <section className={styles.heroCard} aria-label={t('estimatedCost')}>
-          <h3 className={styles.cardTitle}>{t('estimatedCost')}</h3>
+          <h3 className={styles.cardTitle}>{t('localScope')} · {t('estimatedCost')}</h3>
           <p className={styles.heroAmount}>{totals === undefined ? '…' : formatCny(totals.estimatedCostCny)}</p>
           <p className={styles.balanceMeta}>
             {totals === undefined
