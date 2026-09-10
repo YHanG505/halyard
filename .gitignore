@@ -44,3 +44,5 @@ worktrees/
 .agents/worktrees/
 .typert-*/
 native/system/test/bin/
+apps/desktop-live/dist/
+apps/desktop-live/dist-macos/

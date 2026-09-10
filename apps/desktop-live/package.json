@@ -1,0 +1,20 @@
+{
+  "name": "@deepseek-ai/dsh-desktop-live",
+  "description": "Local Electron shell that opens the live dsh web server from this repository (personal live-source app)",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/build.mjs && electron dist/main.js",
+    "dev": "node scripts/build.mjs && electron dist/main.js",
+    "test": "vitest run --config ../../vitest.config.ts tests/launch.spec.ts",
+    "install:macos": "node scripts/install-macos.mjs",
+    "pack:macos": "node scripts/install-macos.mjs --build-only"
+  },
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "typescript": "^6.0.3"
+  }
+}
