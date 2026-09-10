@@ -9,8 +9,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { beijingDayStart } from './fold.ts'
-import type { AccountSpendEstimate } from './types.ts'
+import { rangeStart } from './fold.ts'
+import type { AccountSpendEstimate, UsageRange } from './types.ts'
 
 /** One persisted balance observation. */
 export interface BalanceSample {
@@ -76,23 +76,28 @@ export function recordBalanceSample(sample: BalanceSample, path: string = balanc
 }
 
 /**
- * Estimate the account's spend over the current Beijing day from balance
- * snapshots. The reference is the last snapshot before today when one exists,
- * otherwise the earliest snapshot of today (the estimate then starts there).
+ * Estimate the account's spend over one usage window from balance snapshots.
+ * The reference is the last snapshot before the window when one exists,
+ * otherwise the earliest snapshot inside the window (the estimate then starts
+ * there); `all` starts at the earliest retained snapshot.
  * @param history - persisted balance samples.
+ * @param range - the usage window the estimate follows.
  * @param now - current epoch milliseconds.
  * @returns the estimate, or undefined when no usable reference exists.
  */
-export function estimateAccountSpendToday(
+export function estimateAccountSpend(
   history: readonly BalanceSample[],
+  range: UsageRange,
   now: number,
 ): AccountSpendEstimate | undefined {
-  const dayStart = beijingDayStart(now)
+  const start = rangeStart(range, now)
   const ordered = [...history].sort((left, right) => left.time - right.time)
   const current = ordered.filter(sample => sample.time <= now).at(-1)
   if (current === undefined || current.currency !== 'CNY') return undefined
-  const reference = ordered.filter(sample => sample.time < dayStart).at(-1)
-    ?? ordered.find(sample => sample.time >= dayStart && sample.time < current.time)
+  const reference = range === 'all'
+    ? ordered[0]
+    : (ordered.filter(sample => sample.time < start).at(-1)
+      ?? ordered.find(sample => sample.time >= start && sample.time < current.time))
   if (reference === undefined || reference.currency !== current.currency) return undefined
   const spent = reference.totalBalance - current.totalBalance
   return { spentCny: spent > 0 ? spent : 0, since: reference.time }

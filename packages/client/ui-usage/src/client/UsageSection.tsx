@@ -156,6 +156,14 @@ export function UsageSection(props: UsageSectionProps) {
   if (t === undefined || remote === undefined) return null
 
   const totals = summary?.totals
+  const rangeLabel = t(RANGES.find(entry => entry.value === range)?.labelKey ?? 'rangeToday')
+  const sinceLabel = (epoch: number): string => {
+    const beijing = (value: number): string => new Date(value + 8 * 3_600_000).toISOString().slice(0, 10)
+    const sameDay = beijing(epoch) === beijing(Date.now())
+    return new Date(epoch).toLocaleString('zh-CN', sameDay
+      ? { hour: '2-digit', minute: '2-digit' }
+      : { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  }
 
   return (
     <div className={styles.section} data-testid="usage-section">
@@ -198,7 +206,7 @@ export function UsageSection(props: UsageSectionProps) {
 
       <div className={styles.heroGrid}>
         <section className={styles.heroCard} aria-label={t('accountToday')}>
-          <h3 className={styles.cardTitle}>{t('accountToday')}</h3>
+          <h3 className={styles.cardTitle}>{rangeLabel} · {t('accountRange')}</h3>
           {summary?.account === undefined ? (
             <>
               <p className={styles.heroAmount}>—</p>
@@ -208,8 +216,7 @@ export function UsageSection(props: UsageSectionProps) {
             <>
               <p className={styles.heroAmount}>{formatCny(summary.account.spentCny)}</p>
               <p className={styles.balanceMeta}>
-                {t('accountSince').replace('{time}', new Date(summary.account.since)
-                  .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }))}
+                {t('accountSince').replace('{time}', sinceLabel(summary.account.since))}
               </p>
             </>
           )}

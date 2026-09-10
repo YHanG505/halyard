@@ -12,7 +12,7 @@ import s from '@deepseek-ai/schemastery'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 import { fetchBalance } from './balance.ts'
-import { estimateAccountSpendToday, readBalanceHistory, recordBalanceSample } from './account-usage.ts'
+import { estimateAccountSpend, readBalanceHistory, recordBalanceSample } from './account-usage.ts'
 import {
   collectUsageSamples,
   foldUsageSummary,
@@ -159,7 +159,7 @@ export class UsageService extends TypertRemoteService {
     }
     const samples = await this.loadSamples(now)
     const folded = foldUsageSummary(request.range, samples, this.pricingTable, now)
-    const account = estimateAccountSpendToday(readBalanceHistory(), now)
+    const account = estimateAccountSpend(readBalanceHistory(), request.range, now)
     const summary: UsageSummary = account === undefined ? folded : { ...folded, account }
     this.summaryCache.set(request.range, { generatedAt: now, summary })
     return summary
