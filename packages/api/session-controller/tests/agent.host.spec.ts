@@ -82,7 +82,7 @@ describe('ApiSession identity failures', () => {
       .toContain('belongs to "/existing"')
   })
 
-  it('maps absent and cwd-less point observations to not found', async () => {
+  it('maps absent point observations to not found and serves cwd-less sessions', async () => {
     const ctx = new Context()
     roots.push(ctx)
     await ctx.plugin(SessionStore)
@@ -108,7 +108,7 @@ describe('ApiSession identity failures', () => {
       list: () => Promise.resolve([listed]),
       inspect: () => Promise.resolve({ meta: listed, events: [] }),
     })
-    await expect(inspectApiSession(ctx, listed.id)).rejects.toBeInstanceOf(ApiSessionNotFound)
+    await expect(inspectApiSession(ctx, listed.id)).resolves.toMatchObject({ meta: listed })
     disposeListed()
 
     const catalog = header('cwd-less-inspect')
@@ -117,7 +117,7 @@ describe('ApiSession identity failures', () => {
       list: () => Promise.resolve([catalog]),
       inspect: () => Promise.resolve({ meta: inspected, events: [] }),
     })
-    await expect(inspectApiSession(ctx, catalog.id)).rejects.toBeInstanceOf(ApiSessionNotFound)
+    await expect(inspectApiSession(ctx, catalog.id)).resolves.toMatchObject({ meta: inspected })
   })
 
   it('forwards an explicit inspection signal', async () => {
@@ -139,7 +139,7 @@ describe('ApiSession identity failures', () => {
 })
 
 describe('ApiSession Agent lookup and recovery', () => {
-  it('resumes directly from a retained observation and rejects an invalid observed header', async () => {
+  it('resumes directly from a retained observation, including a project-free header', async () => {
     const { ctx, agents } = await harness()
     const meta = header('observed-resume')
     const resumed = unpublishedAgent(ctx, meta)
@@ -160,13 +160,11 @@ describe('ApiSession Agent lookup and recovery', () => {
     await expect(agents.resolveObservedAgent(observed)).resolves.toEqual({ agent: resumed })
     expect(resume).toHaveBeenCalledWith(expect.objectContaining({ resumeSessionId: meta.id }))
 
-    const invalid = {
+    const projectFree = {
       ...observed,
       header: header('observed-without-cwd', null),
     } as SessionObservation
-    await expect(agents.resolveObservedAgent(invalid)).resolves.toMatchObject({
-      error: { code: 'session/not-found' },
-    })
+    await expect(agents.resolveObservedAgent(projectFree)).resolves.toEqual({ agent: resumed })
   })
 
   it('projects live Agent contexts and maps missing cold identities through Typert lookup failures', async () => {

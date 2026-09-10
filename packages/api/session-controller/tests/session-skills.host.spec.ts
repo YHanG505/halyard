@@ -192,7 +192,7 @@ describe('SessionSkillCatalog', () => {
     await expect(failed).rejects.toThrow('skill registry is absent')
   })
 
-  it('rejects observations without projections or a project cwd', async () => {
+  it('rejects observations without projections and serves an empty catalog without a project cwd', async () => {
     const ctx = await context()
     const sessionId = SessionId('incomplete-skills')
     const withoutProjections = { ...observation(sessionId, { cwd: '/project' }), projections: undefined }
@@ -205,9 +205,8 @@ describe('SessionSkillCatalog', () => {
     const unprojected = catalog.list({ sessionId }, new AbortController().signal)
     await expect(unprojected).rejects.toMatchObject({ code: 'gateway/internal' })
     await expect(unprojected).rejects.toThrow('projected Session observation')
-    const cwdless = catalog.list({ sessionId }, new AbortController().signal)
-    await expect(cwdless).rejects.toMatchObject({ code: 'gateway/internal' })
-    await expect(cwdless).rejects.toThrow('has no project cwd')
+    const cwdless = await catalog.list({ sessionId }, new AbortController().signal)
+    expect(cwdless).toEqual({ skills: [] })
   })
 
   it('classifies a provider listing failure', async () => {

@@ -71,12 +71,10 @@ export class SessionCommandController {
   /**
    * @param ctx - Host context carrying Agent, model, attachment, title, and Workspace services.
    * @param agents - sole owner of create, resume, and Session-local model selection.
-   * @param defaultCwd - project directory used when create names neither a Workspace nor a cwd.
    */
   constructor(
     private readonly ctx: Context,
     private readonly agents: ApiSessionAgentController,
-    private readonly defaultCwd: string,
   ) {}
 
   /**
@@ -98,7 +96,7 @@ export class SessionCommandController {
         })
       }
     }
-    const cwd = workspace?.path ?? request.cwd ?? this.defaultCwd
+    const cwd = workspace?.path ?? request.cwd
     let adopted: Agent
     try {
       adopted = await this.agents.ensureSession(

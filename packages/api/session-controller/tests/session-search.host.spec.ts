@@ -104,7 +104,7 @@ describe('session.search', () => {
     await ctx.fiber.dispose()
   })
 
-  it('searches only list-visible ids and current conversation-message events', async () => {
+  it('searches list-visible ids including project-free sessions and current conversation-message events', async () => {
     const ctx = await baseContext()
     const live = ctx.sessions.create(sid('live'), { meta: header('live', '/live') })
     live.append('user/message', createUserMessage({
@@ -159,7 +159,10 @@ describe('session.search', () => {
     expect(response).toEqual({
       ok: true,
       value: {
-        items: [{ sessionId: 'cold', snippet: 'the matching answer' }],
+        items: [
+          { sessionId: 'legacy', snippet: 'must remain hidden' },
+          { sessionId: 'cold', snippet: 'the matching answer' },
+        ],
         hasMore: false,
       },
     })

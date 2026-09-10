@@ -57,7 +57,7 @@ export class SessionSkillCatalog extends TypertRemoteService {
       )
     }
     if (cwd === undefined) {
-      throw new RemoteError('gateway/internal', `session "${sessionId}" has no project cwd`, {})
+      return { skills: [] }
     }
 
     const live = this.ctx.agents.get(sessionId)

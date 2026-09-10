@@ -99,7 +99,7 @@ async function uploadHarness(origin?: 'subagent'): Promise<{
   if (uploadRoute === undefined) throw new Error('file upload route was not registered')
   return {
     ctx,
-    controller: new SessionCommandController(ctx, agents, '/workspace'),
+    controller: new SessionCommandController(ctx, agents),
     uploads,
     agent,
     followup,
