@@ -253,7 +253,17 @@ export class SessionCommandController {
       )
     }
     const childId = brandString<SessionId>(`session-${randomUUID()}`)
-    const composition = await this.agents.composeAgent(this.agents.presetForObservation(source))
+    const presetId = request.agentPreset ?? this.agents.presetForObservation(source)
+    let composition: Awaited<ReturnType<ApiSessionAgentController['composeAgent']>>
+    try {
+      composition = await this.agents.composeAgent(presetId)
+    } catch (error) {
+      throw new RemoteError(
+        'agent-preset/unavailable',
+        `fork preset "${presetId ?? ''}" is unavailable: ${String(error)}`,
+        { ...(presetId === undefined ? {} : { preset: presetId }) },
+      )
+    }
     try {
       const { provider, model } = this.ctx.agentDefaultModel.currentSelection()
       await this.ctx.agents.create({

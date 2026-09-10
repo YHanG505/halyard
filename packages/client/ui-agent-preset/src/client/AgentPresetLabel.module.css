@@ -140,3 +140,9 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.newWithSecondary {
+  background: transparent;
+  border: 1px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+}

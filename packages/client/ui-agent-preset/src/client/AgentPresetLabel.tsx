@@ -33,6 +33,8 @@ export interface AgentPresetLabelInjected {
   switchPreset: (sessionId: SessionId, id: string) => Promise<string | undefined>
   /** Open a new conversation carrying the chosen preset. */
   startWithPreset: (id: string, cwd: string | undefined) => Promise<string | undefined>
+  /** Fork the started session onto the chosen preset, carrying its history. */
+  forkWithPreset: (sessionId: SessionId, id: string) => Promise<string | undefined>
   /** Persist whether new-session surfaces expose preset selection. */
   setPickerVisible: (enabled: boolean) => Promise<string | undefined>
 }
@@ -50,7 +52,7 @@ export type AgentPresetLabelProps =
  */
 export function AgentPresetLabel({
   sessionId, useSessions, useAgentPresets, useAgentPresetSection, load,
-  switchPreset, startWithPreset, setPickerVisible, t,
+  switchPreset, startWithPreset, forkWithPreset, setPickerVisible, t,
 }: AgentPresetLabelProps) {
   const preset = useSessions((state) => {
     const value = state.byId[sessionId]?.projectionValues?.agentPreset
@@ -97,6 +99,22 @@ export function AgentPresetLabel({
   const startNew = (id: string): void => {
     setBusy(true)
     void startWithPreset(id, cwd).then((failure) => {
+      setBusy(false)
+      if (failure === undefined) {
+        setOpen(false)
+        setRefused(null)
+        return
+      }
+      setNotice(failure)
+    }, (error: unknown) => {
+      setBusy(false)
+      setNotice(error instanceof Error ? error.message : String(error))
+    })
+  }
+
+  const forkTo = (id: string): void => {
+    setBusy(true)
+    void forkWithPreset(sessionId, id).then((failure) => {
       setBusy(false)
       if (failure === undefined) {
         setOpen(false)
@@ -183,14 +201,24 @@ export function AgentPresetLabel({
             <div className={css.notice}>
               <span>{notice ?? t('headerLocked')}</span>
               {refused !== null && !blank && (
-                <button
-                  type="button"
-                  className={css.newWith}
-                  disabled={busy}
-                  onClick={() => { startNew(refused) }}
-                >
-                  {t('headerNewWith')}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className={css.newWith}
+                    disabled={busy}
+                    onClick={() => { forkTo(refused) }}
+                  >
+                    {t('headerForkWith')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${css.newWith} ${css.newWithSecondary}`}
+                    disabled={busy}
+                    onClick={() => { startNew(refused) }}
+                  >
+                    {t('headerNewWith')}
+                  </button>
+                </>
               )}
             </div>
           )}

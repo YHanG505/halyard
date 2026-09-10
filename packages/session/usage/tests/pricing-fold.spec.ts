@@ -116,6 +116,15 @@ describe('usage fold', () => {
     expect(summary.byDay.map(day => day.date)).toEqual(['2026-09-05', '2026-09-07'])
   })
 
+  it('starts week and month at the Beijing calendar boundaries', () => {
+    // 2026-09-09 12:00 Beijing, a Wednesday inside the first full September week.
+    const now = Date.UTC(2026, 8, 9, 4, 0, 0)
+    expect(new Date(rangeStart('week', now) + 8 * 3_600_000).toISOString())
+      .toBe('2026-09-07T00:00:00.000Z')
+    expect(new Date(rangeStart('month', now) + 8 * 3_600_000).toISOString())
+      .toBe('2026-09-01T00:00:00.000Z')
+  })
+
   it('filters by the Beijing day start for the today range', () => {
     const now = Date.UTC(2026, 8, 7, 12, 0, 0) // evening Beijing
     const todayStart = rangeStart('today', now)

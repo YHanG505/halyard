@@ -94,7 +94,7 @@ export interface ISessions {
    * @returns the child session id.
    * @throws when the fork fails, or when a requested child-title rename fails after creation.
    */
-  fork(opts: { sessionId: SessionId; atSeq?: number; increaseTitle?: boolean }): Promise<SessionId>
+  fork(opts: { sessionId: SessionId; atSeq?: number; increaseTitle?: boolean; agentPreset?: string }): Promise<SessionId>
   /**
    * Resolve an Agent-scoped context view (use-and-discard).
    * @param id - session id.

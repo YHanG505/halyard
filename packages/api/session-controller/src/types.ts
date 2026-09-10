@@ -199,6 +199,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
       readonly requestedPreset: string
       readonly existingPreset?: string
     }
+    'agent-preset/unavailable': { readonly preset?: string }
     'session/attachment-invalid': { readonly reason: string }
     'session/queue-item-not-found': { readonly itemId: MessageId }
     'session/steer-unavailable': { readonly itemId: MessageId }
@@ -301,6 +302,8 @@ export interface SessionRenameValue {
 export interface SessionForkRequest {
   readonly sessionId: SessionId
   readonly atSeq?: number
+  /** Preset for the child; omitted forks the source's own preset. */
+  readonly agentPreset?: string
 }
 
 /** Identity of a newly forked Session. */

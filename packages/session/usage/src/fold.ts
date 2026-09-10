@@ -77,10 +77,17 @@ export function rangeStart(range: UsageRange, now: number): number {
   switch (range) {
     case 'today':
       return dayStart
-    case 'week':
-      return dayStart - 6 * 86_400_000
-    case 'month':
-      return dayStart - 29 * 86_400_000
+    case 'week': {
+      // Beijing calendar week: Monday 00:00 of the current week.
+      const weekday = new Date(dayStart + 8 * 3_600_000).getUTCDay()
+      const sinceMonday = (weekday + 6) % 7
+      return dayStart - sinceMonday * 86_400_000
+    }
+    case 'month': {
+      // Beijing calendar month: the 1st 00:00 of the current month.
+      const beijing = new Date(dayStart + 8 * 3_600_000)
+      return Date.UTC(beijing.getUTCFullYear(), beijing.getUTCMonth(), 1) - 8 * 3_600_000
+    }
     case 'all':
       return 0
   }

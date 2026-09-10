@@ -139,6 +139,15 @@ export function apply(ctx: ClientContext): void {
           return error instanceof Error ? error.message : String(error)
         }
       },
+      forkWithPreset: async (sessionId, id) => {
+        try {
+          const childId = await scope.sessions.fork({ sessionId, agentPreset: id })
+          scope.sessions.open(childId)
+          return undefined
+        } catch (error) {
+          return error instanceof Error ? error.message : String(error)
+        }
+      },
       setPickerVisible: async (enabled) => {
         const failure = await writeModeSelectionEnabled(ctx, enabled)
         await controller.load()

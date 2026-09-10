@@ -90,11 +90,13 @@ function renderLabel(
   const load = vi.fn(() => Promise.resolve())
   const switchPreset = vi.fn(() => Promise.resolve(undefined))
   const startWithPreset = vi.fn(() => Promise.resolve(undefined))
+  const forkWithPreset = vi.fn(() => Promise.resolve(undefined))
   const setPickerVisible = vi.fn(() => Promise.resolve(undefined))
   const view = render(<AgentPresetLabel {...({
     load,
     switchPreset,
     startWithPreset,
+    forkWithPreset,
     setPickerVisible,
     sessionId: 's1',
     useSessions: bindSnapshotSelector(sessions),
@@ -102,7 +104,7 @@ function renderLabel(
     useAgentPresetSection: bindSnapshotSelector(sectionStore),
     t: (key: keyof typeof en) => en[key],
   } as unknown as AgentPresetLabelProps)} />)
-  return { load, switchPreset, startWithPreset, setPickerVisible, view }
+  return { load, switchPreset, startWithPreset, forkWithPreset, setPickerVisible, view }
 }
 
 describe('the new-session chip', () => {

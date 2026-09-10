@@ -3,7 +3,7 @@
 /** Locale keys these surfaces render. */
 export type AgentPresetSettingsKey =
   | 'error' | 'userTrust' | 'seatHint' | 'headerHint'
-  | 'headerTitle' | 'headerCurrent' | 'headerLocked' | 'headerNewWith'
+  | 'headerTitle' | 'headerCurrent' | 'headerLocked' | 'headerNewWith' | 'headerForkWith'
   | 'nav' | 'sectionIntro' | 'builtIn' | 'setDefault' | 'view'
   | 'presetStandardName' | 'presetStandardDescription'
   | 'presetPtcName' | 'presetPtcDescription'
@@ -31,6 +31,7 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   headerCurrent: 'Current mode',
   headerLocked: 'This conversation already started; preset changes apply to a new conversation.',
   headerNewWith: 'Start a new conversation with it',
+  headerForkWith: 'Continue this conversation with it',
   nav: 'Agent presets',
   sectionIntro:
     'A preset is the plugin composition one session\'s agent runs — its tools, prompt, and capabilities. '
@@ -106,6 +107,7 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   headerCurrent: '当前模式',
   headerLocked: '本会话已开始，预设不可切换；可在新对话中使用该模式。',
   headerNewWith: '新建对话并使用',
+  headerForkWith: '以此模式继续本对话',
   nav: 'Agent 预设',
   sectionIntro: '预设即一个会话的 Agent 所运行的插件组装 —— 它的工具、提示词与能力。复制一份既有预设改成自己的，或用「创造模式」让 Agent 帮你创建。',
   builtIn: '内置',
