@@ -26,6 +26,8 @@ import type {
 import { SettingsRoot } from './SettingsRoot.tsx'
 import { CloseLabel, HeaderContent, TriggerContent } from './chrome.tsx'
 import { GeneralSection } from './GeneralSection.tsx'
+import { DefaultProjectRow, NewSessionOnOpenRow, type StartupRowsInjected } from './StartupRows.tsx'
+import { readStartupSettings, writeStartupSettings } from './startup-settings.ts'
 import { SettingsDocumentAction } from './SettingsDocumentAction.tsx'
 import type { SettingsDocumentActionInjected } from './SettingsDocumentAction.tsx'
 import { SettingsDocumentStore } from './settings-document-store.ts'
@@ -180,4 +182,23 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     children: { 'settings.general.item': { kind: 'list', scope: 'root' } },
   }, GeneralSection))
+
+  const startupInjected = (): StartupRowsInjected => ({
+    read: readStartupSettings,
+    write: writeStartupSettings,
+  })
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'startup-new-session',
+    order: 30,
+    locale: NS,
+    inject: startupInjected,
+  }, NewSessionOnOpenRow))
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'startup-default-project',
+    order: 31,
+    locale: NS,
+    inject: startupInjected,
+  }, DefaultProjectRow))
 }

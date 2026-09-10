@@ -379,7 +379,7 @@ describe('UiWorkspaceService', () => {
       .rejects.toThrow('uiWorkspace.connectWorkspace: unknown workspace ghost')
   })
 
-  it('targets an explicit, current-session, then recent Workspace and reports failed starts', async () => {
+  it('targets an explicit Workspace or the configured default and otherwise starts a project-free Session', async () => {
     const current = summary('current', { cwd: '/w/current-home', updatedAt: 1 })
     const recent = summary('recent', { cwd: '/w/recent-home', updatedAt: 2 })
     const b = bench({
@@ -396,21 +396,28 @@ describe('UiWorkspaceService', () => {
       expect(b.sessions.open).toHaveBeenLastCalledWith(sid('opened-recent-home'))
     })
 
-    b.sessions.open(current.id)
+    const local = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => local.get(key) ?? null,
+      setItem: (key: string, value: string) => { local.set(key, value) },
+      removeItem: (key: string) => { local.delete(key) },
+      clear: () => { local.clear() },
+    })
+    local.set('dsh.appStartup.useDefaultWorkspace', '1')
+    local.set('dsh.appStartup.defaultWorkspaceId', 'current-home')
     b.uiWorkspace.startSession()
     await vi.waitFor(() => {
       expect(b.sessions.open).toHaveBeenLastCalledWith(sid('opened-current-home'))
     })
 
-    b.sessions.clear()
+    local.set('dsh.appStartup.useDefaultWorkspace', '0')
+    b.sessions.create.mockImplementation(async () => sid('project-free'))
     b.uiWorkspace.startSession()
     await vi.waitFor(() => {
-      expect(b.sessions.open).toHaveBeenLastCalledWith(sid('opened-recent-home'))
+      expect(b.sessions.open).toHaveBeenLastCalledWith(sid('project-free'))
     })
-
-    const empty = bench()
-    empty.uiWorkspace.startSession()
-    expect(empty.sessions.clear).toHaveBeenCalledOnce()
+    expect(b.sessions.create).toHaveBeenLastCalledWith({})
+    vi.unstubAllGlobals()
 
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     b.sessions.create.mockRejectedValueOnce(new Error('create failed'))

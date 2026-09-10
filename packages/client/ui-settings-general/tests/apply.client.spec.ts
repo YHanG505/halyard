@@ -101,7 +101,8 @@ describe('ui-settings-general apply', () => {
     expect(generalLabel(c)).toBe('通用设置')
     expect(c.ctx.slots.spec('settings.general.item')).toEqual({ kind: 'list', scope: 'root' })
     // The General items and the onboarding steps are feature-owned rows; this plugin seats none of its own.
-    expect(c.ctx.slots.entries('settings.general.item').filter(row => row.locale === NS)).toEqual([])
+    expect(c.ctx.slots.entries('settings.general.item').filter(row => row.locale === NS)
+      .map(row => (row.options as { id?: string }).id)).toEqual(['startup-new-session', 'startup-default-project'])
     expect(c.ctx.slots.entries('settings.onboarding').filter(row => row.locale === NS)).toEqual([])
     const { controller, hooks } = actionInjectedOf(c)
     expect(controller.store.getSnapshot().status).toBe('idle')
@@ -205,7 +206,8 @@ describe('ui-settings-general apply', () => {
       expect(ownEntries(c, name)[0]).not.toBe(before[index])
     })
     expect(c.ctx.slots.spec('settings.general.item')).toEqual({ kind: 'list', scope: 'root' })
-    expect(c.ctx.slots.entries('settings.general.item').filter(row => row.locale === NS)).toEqual([])
+    expect(c.ctx.slots.entries('settings.general.item').filter(row => row.locale === NS)
+      .map(row => (row.options as { id?: string }).id)).toEqual(['startup-new-session', 'startup-default-project'])
     // The recovered registrations still ride the locale path.
     const english = localeView('en', 1)
     const chinese = localeView('zh', 2)

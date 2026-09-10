@@ -11,6 +11,7 @@ import type {
 } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import { readStartupSettings } from './startup-settings.ts'
 
 /** Workspace archive and directory operations consumed by Client UI domains. */
 export interface UiWorkspace {
@@ -40,7 +41,7 @@ export interface UiWorkspace {
   connectWorkspace(workspaceId: WorkspaceId): Promise<SessionId>
   /**
    * Start a New Session flow and navigate to its Session.
-   * @param workspaceId - explicit target; absent inherits the current or most recent Workspace.
+   * @param workspaceId - explicit target; absent uses the stored default project when enabled, otherwise a project-free Session.
    */
   startSession(workspaceId?: WorkspaceId): void
   /**
@@ -153,15 +154,11 @@ class UiWorkspaceService extends Service implements UiWorkspace {
 
   startSession(workspaceId?: WorkspaceId): void {
     const workspace = this.workspaces.list.getSnapshot()
-    const sessions = this.sessions.list.getSnapshot()
-    const current = sessions.current
-    const currentWorkspaceId = current === undefined
-      ? undefined
-      : workspace.items.find(item => item.sessionIds.includes(current))?.workspaceId
-    const recent = workspace.phase === 'ready' && sessions.phase === 'ready'
-      ? recentWorkspace(workspace.items, sessions.byId)
+    const settings = readStartupSettings()
+    const preferred = settings.useDefaultWorkspace
+      ? workspace.items.find(item => item.workspaceId === settings.defaultWorkspaceId)
       : undefined
-    const target = workspaceId ?? currentWorkspaceId ?? recent
+    const target = workspaceId ?? preferred?.workspaceId
     if (target === undefined) {
       void this.sessions.create({}).then(
         (sessionId) => { this.openSession(sessionId) },
@@ -205,6 +202,11 @@ class UiWorkspaceService extends Service implements UiWorkspace {
       const workspace = this.workspaces.list.getSnapshot()
       const sessions = this.sessions.list.getSnapshot()
       if (workspace.phase !== 'ready' || sessions.phase !== 'ready') return
+      if (readStartupSettings().newSessionOnOpen) {
+        initial = 'done'
+        this.startSession()
+        return
+      }
       if (sessions.current !== undefined) {
         initial = 'done'
         return
