@@ -599,7 +599,12 @@ export class SessionManager {
    */
   async delete(id: SessionId): Promise<void> {
     const result = await this.remote.session.delete({ sessionId: id })
-    if (!result.ok) throw new Error(`session delete failed: ${result.error.message}`)
+    if (!result.ok) {
+      // A ghost row (already gone from storage) still leaves every list.
+      if (result.error.code !== 'session/not-found') {
+        throw new Error(`session delete failed: ${result.error.message}`)
+      }
+    }
     this.recordMutation({ kind: 'remove', sessionId: id })
     await this.refreshList()
   }

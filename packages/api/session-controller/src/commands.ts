@@ -312,10 +312,20 @@ export class SessionCommandController {
    */
   async delete(request: SessionDeleteRequest): Promise<SessionDeleteValue> {
     const { sessionId } = request
-    if (this.ctx.sessions.get(sessionId) !== undefined || this.ctx.agents.get(sessionId) !== undefined) {
+    if (this.ctx.agents.get(sessionId) !== undefined) {
+      const released = await this.agents.release(sessionId)
+      if (!released) {
+        throw new RemoteError(
+          'session/delete-live',
+          `session "${sessionId}" is live; close it before deleting`,
+          { sessionId },
+        )
+      }
+    }
+    if (this.ctx.sessions.get(sessionId) !== undefined) {
       throw new RemoteError(
         'session/delete-live',
-        `session "${sessionId}" is live; close it before deleting`,
+        `session "${sessionId}" is still attached; close it before deleting`,
         { sessionId },
       )
     }

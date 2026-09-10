@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises'
 import type { Context } from '@deepseek-ai/cordis'
 import { installModelSelection } from '@deepseek-ai/dsh-agent'
 import type {
+  AgentHandle,
   Agent, AgentOptions, AgentSetup, ModelSelection as AgentModelSelection, ModelSelectionRef,
 } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
@@ -138,10 +139,13 @@ export class ApiSessionAgentController {
   private readonly resumes = new Map<SessionId, Promise<Agent>>()
   private readonly creations = new Map<SessionId, Promise<Agent>>()
   private readonly selections = new WeakMap<Agent, InstalledSelection>()
+  /** Handles created via AgentRegistry, retained so Session delete can release them first. */
+  private readonly releaseHandles = new Map<SessionId, AgentHandle>()
   private readonly imageAdmissionChains = new WeakMap<Agent, Promise<void>>()
 
   /** @param ctx - Host context carrying Agent, model, persistence, and Typert services. */
   constructor(private readonly ctx: Context) {
+    ctx.on('agent/disposed', ({ agent }) => { this.releaseHandles.delete(agent.id) })
     ctx.typert.lookups.configure('agent', async (sessionId: SessionId) => {
       const found = await this.resolveAgent(sessionId)
       if ('error' in found) throw found.error
@@ -408,6 +412,19 @@ export class ApiSessionAgentController {
     }
   }
 
+  /**
+   * Dispose the live Agent this controller created for one Session, if any.
+   * @param sessionId - Session whose live Agent should be released.
+   * @returns true when a retained handle was disposed.
+   */
+  async release(sessionId: SessionId): Promise<boolean> {
+    const handle = this.releaseHandles.get(sessionId)
+    if (handle === undefined) return false
+    this.releaseHandles.delete(sessionId)
+    await handle.dispose()
+    return true
+  }
+
   private async resumeObserved(
     sessionId: SessionId,
     observation: SessionObservation,
@@ -424,11 +441,13 @@ export class ApiSessionAgentController {
     if (published !== undefined && hasApiSessionSubagentOwner(this.ctx, published, live)) {
       throw new ApiSessionSubagentOwnership(sessionId)
     }
-    return (await this.ctx.agents.resume({
+    const handle = await this.ctx.agents.resume({
       resumeSessionId: sessionId,
       agentOptions: this.agentOptions(),
       setup: composition.setup,
-    })).agent
+    })
+    this.releaseHandles.set(sessionId, handle)
+    return handle.agent
   }
 
   private async createOrAdopt(
@@ -456,11 +475,13 @@ export class ApiSessionAgentController {
         const storedPreset = this.presetForObservation(observation)
         this.assertPresetUnchanged(sessionId, presetId, storedPreset)
         const composition = await this.composeAgent(storedPreset)
-        return (await this.ctx.agents.resume({
+        const handle = await this.ctx.agents.resume({
           resumeSessionId: sessionId,
           agentOptions: this.agentOptions(),
           setup: composition.setup,
-        })).agent
+        })
+        this.releaseHandles.set(sessionId, handle)
+        return handle.agent
       } catch (error: unknown) {
         if (!(error instanceof SessionQueryError)
           || error.code !== 'SESSION_QUERY_SESSION_NOT_FOUND') throw error
@@ -475,7 +496,7 @@ export class ApiSessionAgentController {
       }
     }
     const composition = await this.composeAgent(presetId)
-    return (await this.ctx.agents.create({
+    const handle = await this.ctx.agents.create({
       sessionId,
       agentOptions: this.agentOptions(),
       meta: {
@@ -483,7 +504,9 @@ export class ApiSessionAgentController {
         ...(composition.agentPreset === undefined ? {} : { agentPreset: composition.agentPreset }),
       },
       setup: composition.setup,
-    })).agent
+    })
+    this.releaseHandles.set(sessionId, handle)
+    return handle.agent
   }
 
   private agentOptions(): AgentOptions {
