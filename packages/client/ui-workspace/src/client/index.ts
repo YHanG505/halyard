@@ -135,7 +135,12 @@ export function apply(ctx: Context): void {
   })
   const archivedInjected = (): ArchivedSessionsInjected => ({
     restore: async (sessionId) => { await uiWorkspace.unarchiveSession(sessionId) },
-    remove: async (sessionId) => { await sessions.delete(sessionId) },
+    remove: async (sessionId) => {
+      await sessions.delete(sessionId)
+      // The section renders the workspace archive set, not the session list:
+      // deleting storage alone leaves a permanent untitled row.
+      await uiWorkspace.unarchiveSession(sessionId)
+    },
   })
   const settingsLabel = ctx.locale.bind(NS)
   ctx.slots.inject('settings.section', () => ctx.slots.register({

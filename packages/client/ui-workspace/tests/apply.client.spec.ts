@@ -30,6 +30,8 @@ async function bench() {
   const renameSession = vi.fn(async (title: string) => ({ ok: true, value: { title, seq: 1 } }))
   const binding = vi.fn(() => ({ session: { rename: renameSession } }))
   const fork = vi.fn(async () => 'forked' as never)
+  const deleteSession = vi.fn(async () => undefined)
+  const unarchiveSession = vi.fn(async () => undefined)
   const subscribe = () => () => {}
   ctx.provide('workspaces', {
     list: {
@@ -43,6 +45,7 @@ async function bench() {
     delete: vi.fn(async () => undefined),
     insertBefore: vi.fn(async () => undefined),
     archiveSession: vi.fn(async () => undefined),
+    unarchiveSession,
     insertSessionBefore,
   } as never)
   ctx.provide('sessions', {
@@ -60,6 +63,7 @@ async function bench() {
     searchResultLimit: 20,
     binding,
     fork,
+    delete: deleteSession,
   } as never)
   const pickDirectory = vi.fn(() => Promise.resolve({ ok: true as const, value: '/projects/picked' }))
   const directoryPicker = { pick: pickDirectory }
@@ -74,6 +78,7 @@ async function bench() {
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, rename,
     insertSessionBefore, open, clear, selectPanel, search, renameSession, binding, fork, pickDirectory,
+    deleteSession, unarchiveSession,
   }
 }
 
@@ -153,6 +158,23 @@ describe('ui-workspace apply', () => {
     const picker = (b.slots.entries('conversation.hero.workspace')[0]!.inject as () => WorkspacePickerInjected)()
     await picker.createWorkspace({ path: '/tmp/project' })
     expect(b.create).toHaveBeenCalledWith({ path: '/tmp/project' })
+  })
+
+  it('removes an archived Session from storage and the archive set together', async () => {
+    const b = await bench()
+    b.slots.register({
+      name: 'root',
+      children: { 'settings.section': { kind: 'list', scope: 'root' } },
+    } as never, () => null)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const archived = (b.slots.entries('settings.section')[0]!.inject as () => {
+      remove: (sessionId: string) => Promise<void>
+    })()
+    await archived.remove('session-dead')
+    expect(b.deleteSession).toHaveBeenCalledWith('session-dead')
+    // The archive set is the list's own source: deleting storage alone leaves
+    // a permanent untitled row.
+    expect(b.unarchiveSession).toHaveBeenCalledWith('session-dead')
   })
 
   it('declares the two directory-flow holes and reports their occupancy per surface', async () => {
