@@ -46,3 +46,5 @@ worktrees/
 native/system/test/bin/
 apps/desktop-live/dist/
 apps/desktop-live/dist-macos/
+apps/desktop/dist/
+apps/desktop/dist-macos/
