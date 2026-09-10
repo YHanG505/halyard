@@ -132,7 +132,7 @@ export function UsageSection(props: UsageSectionProps) {
     setError(null)
     try {
       // Balance first: its fresh snapshot feeds the account-wide estimate.
-      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance())
+      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance({}))
       const carriedSummary = await (force
         ? remote.summary({ range, refresh: true })
         : remote.summary({ range }))

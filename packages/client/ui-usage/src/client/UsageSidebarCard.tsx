@@ -38,7 +38,7 @@ export function UsageSidebarCard(props: UsageSidebarCardProps) {
     if (remote === undefined) return
     try {
       // Balance first: its fresh snapshot feeds the account-wide estimate.
-      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance())
+      const carriedBalance = await (force ? remote.balance({ refresh: true }) : remote.balance({}))
       const carriedSummary = await (force
         ? remote.summary({ range: 'today', refresh: true })
         : remote.summary({ range: 'today' }))

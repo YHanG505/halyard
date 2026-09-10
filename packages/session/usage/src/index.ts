@@ -20,7 +20,7 @@ import {
   type UsageSample,
 } from './fold.ts'
 import { DEFAULT_PRICING_TABLE, type ModelRates, type PricingTable } from './pricing.ts'
-import type { BalanceInfo, UsageRange, UsageSummary, UsageSummaryRequest } from './types.ts'
+import type { BalanceInfo, BalanceRequest, UsageRange, UsageSummary, UsageSummaryRequest } from './types.ts'
 
 export type * from './types.ts'
 export {
@@ -171,7 +171,7 @@ export class UsageService extends TypertRemoteService {
    * @returns the balance or an unavailable branch; never throws.
    */
   @Remote('balance')
-  async balance(): Promise<BalanceInfo> {
+  async balance(_request: BalanceRequest): Promise<BalanceInfo> {
     const credentials = this.ctx.get('credentials')
     if (credentials === undefined) return { isAvailable: false, reason: 'missing-credential' }
     const resolved = await credentials.resolve(this.apiKeyRef)
