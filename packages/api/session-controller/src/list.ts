@@ -28,6 +28,9 @@ const sessionListMetadataSchema: z.ZodType<SessionListMetadata> = z.object({
   lastPromptAt: z.number().nullable(),
 })
 
+/** Largest stored log probed for cold blankness (bytes). */
+const COLD_BLANK_PROBE_BYTES = 16_384
+
 const imageLimitsSchema = z.object({
   maxImageBytes: z.number().int().positive(),
   maxImagesPerMessage: z.number().int().positive(),
@@ -137,22 +140,49 @@ export class ApiSessionList {
       }
       cold.push(record.header)
     }
-    for (const header of cold) items.push(this.summarizeCold(header))
+    for (const header of cold) items.push(await this.summarizeCold(header))
     items.sort((left, right) => right.updatedAt - left.updatedAt)
     return items
   }
 
-  private summarizeCold(header: SessionHeader): SessionSummary {
+  private async summarizeCold(header: SessionHeader): Promise<SessionSummary> {
     const projections = this.projectionsFor(header, undefined)
     const metadata = projections?.values.sessionListMetadata
     return {
       sessionId: header.id,
       updatedAt: updatedAt(header, metadata),
       running: false,
-      // A large, metadata-less, or inaccessible cache miss remains unknown and visible.
-      blank: metadata?.blank ?? false,
+      // Cached metadata wins; a small metadata-less log is probed so a
+      // seed-only Session stays hidden; larger or unreadable ones stay visible.
+      blank: metadata?.blank ?? await this.probeBlank(header),
       ...listFields(header),
       ...(projections === undefined ? {} : { projections }),
+    }
+  }
+
+  /**
+   * Derive blankness for a cold row without cached metadata by reading a small
+   * stored log: a log with no human message is a seed-only composition.
+   * @param header - cold Session header.
+   * @returns true when the stored log is small and holds no user message.
+   */
+  private async probeBlank(header: SessionHeader): Promise<boolean> {
+    const persistence = this.ctx.get('sessionPersistence')
+    if (persistence === undefined) return false
+    try {
+      const snapshot = await persistence.stat(header.id)
+      const size = snapshot?.sizeBytes
+      if (size === undefined || size > COLD_BLANK_PROBE_BYTES) return false
+      const handle = await persistence.open(header.id, 'read')
+      try {
+        const { events } = await handle.read()
+        return !events.some(event => event.type === 'user/message')
+      } finally {
+        await handle.close()
+      }
+    } catch {
+      // An unreadable cold log stays visible rather than silently disappearing.
+      return false
     }
   }
 

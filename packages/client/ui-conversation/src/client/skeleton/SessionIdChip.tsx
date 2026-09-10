@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import { Pill } from '@deepseek-ai/dsh-client-ui-primitives'
 import css from './SessionIdChip.module.css'
 
 /** Full component props: session scope plus header copy. */
@@ -36,9 +37,8 @@ export function SessionIdChip({ sessionId, t }: SessionIdChipProps) {
   }
 
   return (
-    <button
-      type="button"
-      className={css.chip}
+    <Pill
+      className={css.chipHost}
       title={t('sessionId.copyTitle')}
       aria-label={t('sessionId.copyTitle')}
       data-testid="session-id-chip"
@@ -46,6 +46,6 @@ export function SessionIdChip({ sessionId, t }: SessionIdChipProps) {
     >
       <span className={css.id}>{sessionId}</span>
       {copied && <span className={css.toast}>{t('sessionId.copied')}</span>}
-    </button>
+    </Pill>
   )
 }

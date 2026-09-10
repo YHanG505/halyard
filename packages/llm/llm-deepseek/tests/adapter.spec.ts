@@ -1697,22 +1697,22 @@ describe('plugin registration and config', () => {
     await ctx.plugin(LlmDeepSeek, { baseURL: 'http://127.0.0.1:1' })
     expect(ctx.llm.listProviders()).toEqual([{ id: 'deepseek-official', name: 'DeepSeek' }])
     await expect(ctx.llm.listModels('deepseek-official')).resolves.toEqual([
-      { provider: 'deepseek-official', id: 'deepseek-flash', name: 'DeepSeek-V41-Flash', inputModalities: ['text', 'image'] },
+      { provider: 'deepseek-official', id: 'deepseek-flash', name: 'DeepSeek-V41-Flash', description: 'deepseek-flash', inputModalities: ['text', 'image'] },
       {
         provider: 'deepseek-official',
         id: 'deepseek-v4-flash',
         name: 'DeepSeek-V4-Flash',
-        description: 'Fast, efficient, and economical; suited to focused, routine, or parallel tasks.',
+        description: 'deepseek-v4-flash',
         inputModalities: ['text'],
       },
       {
         provider: 'deepseek-official',
         id: 'deepseek-v4-pro',
         name: 'DeepSeek-V4-Pro',
-        description: 'Stronger agentic coding, knowledge, and difficult reasoning; suited to complex or quality-critical tasks at higher cost.',
+        description: 'deepseek-v4-pro',
         inputModalities: ['text'],
       },
-      { provider: 'deepseek-official', id: 'deepseek-v4-flash-vision-exp', name: 'DeepSeek-V4-Flash-Vision-Exp', inputModalities: ['text', 'image'] },
+      { provider: 'deepseek-official', id: 'deepseek-v4-flash-vision-exp', name: 'DeepSeek-V4-Flash-Vision-Exp', description: 'deepseek-v4-flash-vision-exp', inputModalities: ['text', 'image'] },
     ])
     await expect(ctx.llm.resolveModelInfo('deepseek-official', 'deepseek-flash'))
       .resolves.toMatchObject({
@@ -1836,22 +1836,22 @@ describe('plugin registration and config', () => {
     await ctx.plugin(LlmRuntime)
     LlmDeepSeek.apply(ctx, { baseURL: 'http://127.0.0.1:1' })
     await expect(ctx.llm.listModels('deepseek-official')).resolves.toEqual([
-      { provider: 'deepseek-official', id: 'deepseek-flash', name: 'DeepSeek-V41-Flash', inputModalities: ['text', 'image'] },
+      { provider: 'deepseek-official', id: 'deepseek-flash', name: 'DeepSeek-V41-Flash', description: 'deepseek-flash', inputModalities: ['text', 'image'] },
       {
         provider: 'deepseek-official',
         id: 'deepseek-v4-flash',
         name: 'DeepSeek-V4-Flash',
-        description: 'Fast, efficient, and economical; suited to focused, routine, or parallel tasks.',
+        description: 'deepseek-v4-flash',
         inputModalities: ['text'],
       },
       {
         provider: 'deepseek-official',
         id: 'deepseek-v4-pro',
         name: 'DeepSeek-V4-Pro',
-        description: 'Stronger agentic coding, knowledge, and difficult reasoning; suited to complex or quality-critical tasks at higher cost.',
+        description: 'deepseek-v4-pro',
         inputModalities: ['text'],
       },
-      { provider: 'deepseek-official', id: 'deepseek-v4-flash-vision-exp', name: 'DeepSeek-V4-Flash-Vision-Exp', inputModalities: ['text', 'image'] },
+      { provider: 'deepseek-official', id: 'deepseek-v4-flash-vision-exp', name: 'DeepSeek-V4-Flash-Vision-Exp', description: 'deepseek-v4-flash-vision-exp', inputModalities: ['text', 'image'] },
     ])
   })
 

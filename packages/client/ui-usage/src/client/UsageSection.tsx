@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { Pill } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import type { BalanceInfo, UsageRange, UsageSummary } from '@deepseek-ai/dsh-usage/types'
@@ -192,15 +193,14 @@ export function UsageSection(props: UsageSectionProps) {
 
       <div className={styles.rangeRow} role="group" aria-label={t('title')}>
         {RANGES.map(({ value, labelKey }) => (
-          <button
+          <Pill
             key={value}
-            type="button"
-            className={range === value ? `${styles.rangeButton} ${styles.rangeButtonActive}` : styles.rangeButton}
+            active={range === value}
             aria-pressed={range === value}
             onClick={() => { setRange(value) }}
           >
             {t(labelKey)}
-          </button>
+          </Pill>
         ))}
       </div>
 
