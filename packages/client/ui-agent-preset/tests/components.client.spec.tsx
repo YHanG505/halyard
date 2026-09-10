@@ -15,6 +15,7 @@ import type { AgentPresetLabelProps } from '../src/client/AgentPresetLabel.tsx'
 import { AgentPresetSeat } from '../src/client/AgentPresetSeat.tsx'
 import type { AgentPresetSeatProps } from '../src/client/AgentPresetSeat.tsx'
 import type { AgentPresetSettingsState } from '../src/client/settings-store.ts'
+import type { AgentPresetSectionState } from '../src/client/section-store.ts'
 import type { AgentPresetSeatState } from '../src/client/seat-store.ts'
 import { en } from '../src/client/locales.ts'
 
@@ -60,24 +61,48 @@ function renderSeat(
   return actions
 }
 
+const SECTION_READY: AgentPresetSectionState = {
+  status: 'ready',
+  error: null,
+  authorable: false,
+  hasDocument: false,
+  showPicker: true,
+  policySaving: false,
+  rows: [],
+  copy: null,
+  view: null,
+  pendingDelete: null,
+  deleting: false,
+  revealedPaths: {},
+}
+
 function renderLabel(
   summary: { blank: boolean; projectionValues?: { agentPreset?: string | null } } | undefined,
   roster: Partial<AgentPresetSettingsState> = {},
+  section: Partial<AgentPresetSectionState> = {},
 ) {
   // The chip and the label read the same roster, metadata included.
   const store = createSnapshotStore<AgentPresetSettingsState>({
     ...ROSTER_READY, options: SEAT_READY.options, ...roster,
   })
+  const sectionStore = createSnapshotStore<AgentPresetSectionState>({ ...SECTION_READY, ...section })
   const sessions = createSnapshotStore({ byId: summary === undefined ? {} : { s1: summary } })
   const load = vi.fn(() => Promise.resolve())
+  const switchPreset = vi.fn(() => Promise.resolve(undefined))
+  const startWithPreset = vi.fn(() => Promise.resolve(undefined))
+  const setPickerVisible = vi.fn(() => Promise.resolve(undefined))
   const view = render(<AgentPresetLabel {...({
     load,
+    switchPreset,
+    startWithPreset,
+    setPickerVisible,
     sessionId: 's1',
     useSessions: bindSnapshotSelector(sessions),
     useAgentPresets: bindSnapshotSelector(store),
+    useAgentPresetSection: bindSnapshotSelector(sectionStore),
     t: (key: keyof typeof en) => en[key],
   } as unknown as AgentPresetLabelProps)} />)
-  return { load, view }
+  return { load, switchPreset, startWithPreset, setPickerVisible, view }
 }
 
 describe('the new-session chip', () => {
@@ -291,16 +316,21 @@ describe('the chip introduce cue', () => {
 })
 
 describe('the session-header label', () => {
-  it('names the preset the session runs, and never offers a switch', async () => {
+  it('names the preset and opens the picker on click', async () => {
     const { load } = renderLabel({
       blank: false,
       projectionValues: { agentPreset: 'standard' },
     })
 
     await waitFor(() => { expect(load).toHaveBeenCalledTimes(1) })
-    // A control here would promise a switch the host refuses outright.
-    expect(screen.queryByRole('button')).toBeNull()
-    expect(screen.getByTitle(en.presetStandardDescription).textContent).toBe(en.presetStandardName)
+    const label = screen.getByRole('button')
+    expect(label.getAttribute('title')).toBe(en.presetStandardDescription)
+    expect(label.textContent).toBe(en.presetStandardName)
+
+    fireEvent.click(label)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText(en.headerCurrent)).toBeTruthy()
+    expect(screen.getByRole('switch')).toBeTruthy()
   })
 
   it('falls back to the id, and to the generic hint, when metadata is absent', () => {

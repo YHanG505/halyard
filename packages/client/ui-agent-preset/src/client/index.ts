@@ -34,7 +34,7 @@ import type { AgentPresetSectionInjected } from './AgentPresetSection.tsx'
 import { AgentPresetSeatController } from './seat-store.ts'
 import { AgentPresetSectionController } from './section-store.ts'
 import { en, zh, type AgentPresetSettingsKey } from './locales.ts'
-import { AGENT_PRESET_SETTINGS_NS, AgentPresetSettingsController } from './settings-store.ts'
+import { AGENT_PRESET_SETTINGS_NS, AgentPresetSettingsController, writeModeSelectionEnabled } from './settings-store.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -120,8 +120,31 @@ export function apply(ctx: ClientContext): void {
     })
 
     const labelInjected = (): AgentPresetLabelInjected => ({
-      hooks: { agentPresets: controller.store },
+      hooks: { agentPresets: controller.store, agentPresetSection: section.store },
       load: () => controller.load(),
+      switchPreset: async (sessionId, id) => {
+        const response = await ctx.remote.agentPresets.select(sessionId, id)
+        return response.ok ? undefined : response.error.message
+      },
+      startWithPreset: async (id, cwd) => {
+        try {
+          // The client create request carries no preset: mint the blank
+          // session first, then select the preset on it, the same two-step
+          // the new-session chip uses.
+          const sessionId = await scope.sessions.create(cwd === undefined ? {} : { cwd })
+          const selected = await ctx.remote.agentPresets.select(sessionId, id)
+          scope.sessions.open(sessionId)
+          return selected.ok ? undefined : selected.error.message
+        } catch (error) {
+          return error instanceof Error ? error.message : String(error)
+        }
+      },
+      setPickerVisible: async (enabled) => {
+        const failure = await writeModeSelectionEnabled(ctx, enabled)
+        await controller.load()
+        await section.load()
+        return failure
+      },
     })
 
     scope.effect(() => {

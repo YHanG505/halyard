@@ -3,6 +3,7 @@
 /** Locale keys these surfaces render. */
 export type AgentPresetSettingsKey =
   | 'error' | 'userTrust' | 'seatHint' | 'headerHint'
+  | 'headerTitle' | 'headerCurrent' | 'headerLocked' | 'headerNewWith'
   | 'nav' | 'sectionIntro' | 'builtIn' | 'setDefault' | 'view'
   | 'presetStandardName' | 'presetStandardDescription'
   | 'presetPtcName' | 'presetPtcDescription'
@@ -26,6 +27,10 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   userTrust: 'Custom',
   seatHint: 'Agent preset for the session you are about to start',
   headerHint: 'The agent preset this session runs, fixed when it started',
+  headerTitle: 'Agent mode',
+  headerCurrent: 'Current mode',
+  headerLocked: 'This conversation already started; preset changes apply to a new conversation.',
+  headerNewWith: 'Start a new conversation with it',
   nav: 'Agent presets',
   sectionIntro:
     'A preset is the plugin composition one session\'s agent runs — its tools, prompt, and capabilities. '
@@ -97,6 +102,10 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   userTrust: '自定义',
   seatHint: '即将开始的这个会话所用的 Agent 预设',
   headerHint: '本会话运行的 Agent 预设，开始时即固定',
+  headerTitle: 'Agent 模式',
+  headerCurrent: '当前模式',
+  headerLocked: '本会话已开始，预设不可切换；可在新对话中使用该模式。',
+  headerNewWith: '新建对话并使用',
   nav: 'Agent 预设',
   sectionIntro: '预设即一个会话的 Agent 所运行的插件组装 —— 它的工具、提示词与能力。复制一份既有预设改成自己的，或用「创造模式」让 Agent 帮你创建。',
   builtIn: '内置',
