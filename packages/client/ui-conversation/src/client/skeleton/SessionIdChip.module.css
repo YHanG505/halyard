@@ -1,8 +1,8 @@
 /* Session-id chip: the shared Pill capsule keeps the official control
-   geometry; the host adds truncation and the copy toast. */
+   geometry; the host adds truncation only. Copy feedback rides the shared
+   top-center Toast. */
 
 .chipHost {
-  position: relative;
   max-width: 180px;
   font-family: var(--ds-font-family-code);
 }
@@ -12,20 +12,4 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.toast {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0 8px;
-  border-radius: 6px;
-  background: var(--dsw-alias-label-primary);
-  color: var(--dsw-alias-label-primary-foreground);
-  font-family: inherit;
-  font-size: 10px;
-  line-height: 18px;
-  white-space: nowrap;
-  pointer-events: none;
 }
