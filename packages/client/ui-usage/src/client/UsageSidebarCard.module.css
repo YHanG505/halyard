@@ -1,0 +1,84 @@
+.card {
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 12px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--dsw-alias-border-l2);
+}
+
+.topUp {
+  margin-top: 2px;
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  line-height: 24px;
+  border-radius: 8px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-interactive-bg-hover);
+  text-decoration: none;
+}
+
+.topUp:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.rail {
+  margin: 0 auto 6px;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  border-radius: 10px;
+  color: var(--dsw-alias-label-secondary);
+  text-decoration: none;
+}
+
+.rail:hover {
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.railGlyph {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dsw-alias-brand-primary);
+}
+
+.railValue {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}

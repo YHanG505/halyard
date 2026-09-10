@@ -1,0 +1,353 @@
+/* Usage dashboard section. Tokens only via `--dsw-alias-*`. Mobile-first:
+ * cards stack; tables scroll horizontally on narrow viewports. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  color: var(--dsw-alias-label-primary);
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
+
+.intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.rangeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rangeButton {
+  appearance: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-secondary);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.rangeButtonActive {
+  border-color: var(--dsw-alias-brand-primary);
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.card {
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 16px;
+  padding: 20px;
+  background: var(--dsw-alias-bg-layer-1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.balanceAmount {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-all;
+}
+
+.balanceMeta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.unavailable {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-state-warn-label);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+@media (min-width: 520px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.statValue {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 20px;
+  min-width: 420px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.table td {
+  color: var(--dsw-alias-label-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.errorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.errorText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.retryButton {
+  appearance: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  min-height: 28px;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.heroCard {
+  position: relative;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heroAmount {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.splitTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l2);
+  overflow: hidden;
+}
+
+.splitCharged {
+  height: 100%;
+  background: var(--dsw-alias-brand-primary);
+}
+
+.topUpButton {
+  margin-top: 6px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.topUpButton:hover {
+  opacity: 0.88;
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chartBody {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 140px;
+}
+
+.chartColumn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.chartBarTrack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: transparent;
+}
+
+.chartBar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--dsw-alias-brand-primary);
+  opacity: 0.85;
+}
+
+.chartLabel {
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+.chartMax {
+  align-self: flex-end;
+  font-size: 11px;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.shareList {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shareRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shareHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shareModel {
+  font-size: 13px;
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareValue {
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shareTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l2);
+  overflow: hidden;
+}
+
+.shareFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--dsw-alias-brand-primary);
+  opacity: 0.85;
+}
+
+.rangeButton:focus-visible,
+.retryButton:focus-visible,
+.topUpButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 3px;
+}

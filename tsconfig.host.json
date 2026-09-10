@@ -176,6 +176,7 @@
     { "path": "./packages/api/workspace-controller/tsconfig.host.json" },
     { "path": "./packages/typert/loader" },
     { "path": "./packages/session/session-persistence" },
+    { "path": "./packages/session/usage" },
     { "path": "./packages/session/session-format" },
     { "path": "./packages/session/session-format-v0-to-v1" },
     { "path": "./packages/session/session-format-v1-to-v2" },
