@@ -9,7 +9,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import type {
-  ISessions, SessionBinding, SessionFace,
+  ISessions, SessionBinding, SessionFace, SessionSummary,
 } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-locale/client'
@@ -44,6 +44,21 @@ interface ConversationAttachmentFace {
   ): Promise<SubmitOutcome>
   serializeDraftAttachments(attachmentIds: readonly DraftAttachmentId[]): Promise<DraftAttachmentSerializationResult>
   releaseDraftAttachment(id: DraftAttachmentId): void
+  rebindDraftFiles(sessionId: SessionId, ids: readonly DraftAttachmentId[]): void
+}
+
+/**
+ * Whether one summary describes the first message of a blank project-free
+ * conversation: no directory was chosen and no workspace owns it, so the
+ * send allocates a topic directory instead of sharing the fallback root.
+ * @param summary - the addressed Session's list summary.
+ * @returns true when the send should promote the conversation.
+ */
+export function isProjectFreeFirstSend(summary: SessionSummary | undefined): boolean {
+  return summary !== undefined
+    && summary.blank
+    && summary.cwd === undefined
+    && summary.origin === undefined
 }
 
 /** Session-addressed input facade registry (SessionInputResolver face + composer-layer extras). */
@@ -187,10 +202,12 @@ export class InputHub implements SessionInputResolver {
   }
 
   /**
-   * Default sink: optimistic clear + prompt. The session is always a real
-   * host entity (materialized when its workspace was picked), so there is
-   * exactly one path; a failed first prompt is an ordinary prompt failure
-   * (banner via promptError, draft restored only while untouched).
+   * Default sink: optimistic clear + prompt. A blank project-free Session is
+   * first promoted to a topic-named conversation with its own Host directory,
+   * so sibling conversations never share an output folder; every other send
+   * keeps the ordinary prompt path, and a failed first prompt is an ordinary
+   * prompt failure (banner via promptError, draft restored only while
+   * untouched).
    */
   private sink(
     session: SessionFace,
@@ -200,7 +217,41 @@ export class InputHub implements SessionInputResolver {
     signal: AbortSignal,
   ): Promise<SubmitOutcome> {
     if (text === '' && attachmentIds.length === 0) return Promise.resolve({ kind: 'success' })
-    return this.conversation().sendSession(session, text, attachmentIds, mode, signal)
+    const send = (target: SessionFace): Promise<SubmitOutcome> =>
+      this.conversation().sendSession(target, text, attachmentIds, mode, signal)
+    return this.promoteProjectFree(session, text, attachmentIds).then(
+      target => send(target ?? session),
+      () => send(session),
+    )
+  }
+
+  /**
+   * Allocate the topic directory for the first message of a blank project-free
+   * conversation and hand the send to the successor Session.
+   * @param session - the current blank, cwd-less Session.
+   * @param text - the first message text, used as the topic phrase.
+   * @param attachmentIds - drafted attachments to carry to the successor.
+   * @returns the successor Session, or undefined when this is not a
+   *   project-free first send (or promotion could not carry the drafts).
+   */
+  private async promoteProjectFree(
+    session: SessionFace,
+    text: string,
+    attachmentIds: readonly DraftAttachmentId[],
+  ): Promise<SessionFace | undefined> {
+    const topic = text.trim()
+    if (topic === '') return undefined
+    const sessions = this.sessions()
+    if (!isProjectFreeFirstSend(sessions.list.getSnapshot().byId[session.sessionId])) return undefined
+    const nextId = await sessions.create({ projectFreeName: topic })
+    const binding = sessions.binding(nextId)
+    if (binding === undefined) return undefined
+    if (attachmentIds.length > 0) {
+      if (!this.shell(nextId).addAttachments(attachmentIds)) return undefined
+      this.conversation().rebindDraftFiles(nextId, attachmentIds)
+    }
+    sessions.open(nextId)
+    return binding.session
   }
 
   /**
