@@ -135,10 +135,17 @@ describe('desktop macOS release signature', () => {
     })
   })
 
-  it('rejects unsigned macOS builds and malformed signing modes', async () => {
+  it('builds unsigned macOS artifacts without a Developer ID or update feed', async () => {
     const { createElectronBuilderConfig } = await import('../electron-builder.config.mjs')
-    expect(() => createElectronBuilderConfig({ ...RELEASE_ENVIRONMENT, DSH_DESKTOP_UNSIGNED: '1' }))
-      .toThrow(/unsigned builds require Windows/u)
+    const unsigned = createElectronBuilderConfig(
+      { ...RELEASE_ENVIRONMENT, DSH_DESKTOP_UNSIGNED: '1' },
+      'darwin',
+      'arm64',
+    )
+    expect(unsigned).toMatchObject({
+      mac: { identity: undefined, forceCodeSigning: false, hardenedRuntime: false, notarize: false },
+      publish: null,
+    })
     expect(() => createElectronBuilderConfig({ ...RELEASE_ENVIRONMENT, DSH_DESKTOP_UNSIGNED: 'yes' }))
       .toThrow(/must be 0 or 1/u)
   })

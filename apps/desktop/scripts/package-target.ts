@@ -204,7 +204,8 @@ export function parseDesktopPackageInvocation(
   })
   if (positionals.length > 1) throw new Error('desktop package: expected at most one target')
   const name = positionals[0] ?? hostTargetName(hostPlatform, hostArch)
-  if (values.unsigned && name !== 'win-x64') throw new Error('desktop package: --unsigned requires win-x64')
+  const unsignable = name === 'win-x64' || name === 'mac-arm64' || name === 'mac-x64'
+  if (values.unsigned && !unsignable) throw new Error('desktop package: --unsigned requires a win-x64 or mac target')
   if (values.unsigned && values['prepare-only']) throw new Error('desktop package: --unsigned cannot use --prepare-only')
   return {
     target: resolveDesktopPackageTarget(name, hostPlatform, hostArch),
@@ -311,7 +312,11 @@ async function main(): Promise<void> {
   await runPnpm(['run', 'prepare:packages'], targetEnv)
   await runPnpm(['run', 'prepare:dsh'], targetEnv)
   if (invocation.prepareOnly) return
-  if (target.platform === 'darwin' && !invocation.directory) {
+  // An unsigned macOS run stops at the application directory: the local DMG
+  // script ad-hoc signs that app and builds the image itself, because the
+  // signed release path (notarization + sealed DMG) requires a Developer ID.
+  const unsignedDarwin = invocation.unsigned && target.platform === 'darwin'
+  if (target.platform === 'darwin' && !invocation.directory && !unsignedDarwin) {
     await runPnpm([
       ...desktopElectronBuilderArguments(target, true),
       '--config.mac.notarize=false',
@@ -323,7 +328,7 @@ async function main(): Promise<void> {
       environment: electronBuilderEnv,
     }, artifact => runPnpm(desktopElectronBuilderArguments(target, false, artifact), electronBuilderEnv))
   } else {
-    await runPnpm(desktopElectronBuilderArguments(target, invocation.directory), electronBuilderEnv)
+    await runPnpm(desktopElectronBuilderArguments(target, invocation.directory || unsignedDarwin), electronBuilderEnv)
   }
   if (!invocation.directory && !invocation.unsigned) writeReleaseRecord(target, electronBuilderEnv, buildPaths.artifacts)
 }

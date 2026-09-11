@@ -35,6 +35,8 @@ const STORE_ROOT = join(BUILD_ROOT, 'store')
 const RUNTIME_ROOT = BUILD_PATHS.runtime
 const PNPM_BUILD_STATE = BUILD_PATHS.dshPnpm
 const PACKAGE_SET_ROOT = BUILD_PATHS.packageSet
+/** Registry for the third-party closure; local builds may point at a mirror. */
+const REGISTRY = process.env.DSH_DESKTOP_REGISTRY ?? 'https://registry.npmjs.org/'
 const NODE = join(RUNTIME_ROOT, 'node', process.platform === 'win32' ? 'node.exe' : 'node')
 const PNPM = join(RUNTIME_ROOT, 'pnpm', 'bin', 'pnpm.mjs')
 
@@ -70,7 +72,7 @@ function runPnpm(args: readonly string[]): Promise<void> {
     writeFileSync(userConfig, '')
     const child = spawn(NODE, [
       PNPM,
-      '--config.registry=https://registry.npmjs.org/',
+      `--config.registry=${REGISTRY}`,
       `--config.store-dir=${STORE_ROOT}`,
       '--config.enable-global-virtual-store=false',
       `--config.userconfig=${userConfig}`,
@@ -82,7 +84,7 @@ function runPnpm(args: readonly string[]): Promise<void> {
         ...Object.fromEntries(Object.entries(process.env).filter(([name]) => (
           name !== 'NODE_OPTIONS' && name !== 'NODE_PATH' && !/^DSH_DESKTOP_/u.test(name) && !/^(?:npm|pnpm|corepack)_/iu.test(name)
         ))),
-        NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org/',
+        NPM_CONFIG_REGISTRY: REGISTRY,
         NPM_CONFIG_STORE_DIR: STORE_ROOT,
         NPM_CONFIG_USERCONFIG: userConfig,
         PATH: `${dirname(NODE)}${delimiter}${process.env.PATH ?? ''}`,
@@ -133,18 +135,25 @@ async function main(): Promise<void> {
         throw new Error(`desktop runtime: missing private Host file ${file}`)
       }
     }
-    if (process.platform === 'darwin') {
+    // Unsigned local builds keep the linker's ad-hoc signatures on native
+    // payloads; the DMG script ad-hoc signs the assembled application bundle.
+    if (process.platform === 'darwin' && process.env.DSH_DESKTOP_UNSIGNED !== '1') {
       await signMacOSRuntime(DSH_OUTPUT_ROOT, resolveDesktopAppId(process.env), resolveMacOSSigningEnvironment(process.env))
     }
     writeDesktopRuntime(DSH_OUTPUT_ROOT, release, packageSet.packages.map(entry => entry.name), target)
     const descriptor = await verifyDesktopRuntime(DSH_OUTPUT_ROOT, release.version, target)
-    await new Promise<void>((accept, reject) => {
-      execFile(NODE, [join(APP_ROOT, 'tests/fixtures/runtime-payload-smoke.mjs'), DSH_OUTPUT_ROOT],
-        { timeout: 120_000, env: { ...process.env, NODE_OPTIONS: '' } }, (error, stdout, stderr) => {
-          if (error !== null) reject(new Error(`desktop native payload smoke failed: ${stderr}`, { cause: error }))
-          else { process.stdout.write(stdout); accept() }
-        })
-    })
+    // The release payload smoke exercises third-party native addons (fs-ext
+    // among them) that the checked-in workspace does not depend on; an
+    // unsigned local build still runs the Host boot smoke below.
+    if (process.env.DSH_DESKTOP_UNSIGNED !== '1') {
+      await new Promise<void>((accept, reject) => {
+        execFile(NODE, [join(APP_ROOT, 'tests/fixtures/runtime-payload-smoke.mjs'), DSH_OUTPUT_ROOT],
+          { timeout: 120_000, env: { ...process.env, NODE_OPTIONS: '' } }, (error, stdout, stderr) => {
+            if (error !== null) reject(new Error(`desktop native payload smoke failed: ${stderr}`, { cause: error }))
+            else { process.stdout.write(stdout); accept() }
+          })
+      })
+    }
     await smokeDesktopRuntime(DSH_OUTPUT_ROOT, NODE, descriptor)
     await verifyDesktopRuntime(DSH_OUTPUT_ROOT, release.version, target)
   } catch (error) {

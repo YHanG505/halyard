@@ -34,11 +34,16 @@ export function createElectronBuilderConfig(
     throw new Error('desktop package: DSH_DESKTOP_UNSIGNED must be 0 or 1')
   }
   const unsigned = env.DSH_DESKTOP_UNSIGNED === '1'
-  if (unsigned && resolvedPlatform !== 'win32') throw new Error('desktop package: unsigned builds require Windows')
+  if (unsigned && resolvedPlatform !== 'win32' && resolvedPlatform !== 'darwin') {
+    throw new Error('desktop package: unsigned builds require Windows or macOS')
+  }
   const packagesMacOS = targetPlatform === 'darwin' || (targetPlatform === undefined && hostPlatform === 'darwin')
   const packagesWindows = targetPlatform === 'win32'
-  const macOSSigning = packagesMacOS ? resolveMacOSSigningEnvironment(env) : undefined
-  if (packagesMacOS) resolveMacOSNotarizationEnvironment(env)
+  // An unsigned macOS app keeps Electron's binaries; the local DMG script
+  // applies the ad-hoc signature after packaging. No Developer ID, no
+  // notarization, no update feed.
+  const macOSSigning = packagesMacOS && !unsigned ? resolveMacOSSigningEnvironment(env) : undefined
+  if (packagesMacOS && !unsigned) resolveMacOSNotarizationEnvironment(env)
   const windowsSigner = packagesWindows && !unsigned
     ? createWindowsTokenSigner({
         certificateFile: env.DSH_DESKTOP_WINDOWS_CER_FILE,
@@ -54,8 +59,8 @@ export function createElectronBuilderConfig(
   const buildPaths = desktopTargetBuildPaths(resolveDesktopBuildTarget(env, hostPlatform, hostArch))
   return {
     appId,
-    productName: 'DeepSeek Harness',
-    artifactName: 'deepseek-harness-${version}-${os}-${arch}.${ext}',
+    productName: 'DeepSeek Halyard',
+    artifactName: 'deepseek-halyard-${version}-${os}-${arch}.${ext}',
     directories: { output: unsigned ? join(buildPaths.root, 'unsigned-artifacts') : buildPaths.artifacts },
     asar: true,
     files: [
@@ -73,11 +78,11 @@ export function createElectronBuilderConfig(
     mac: {
       category: 'public.app-category.developer-tools',
       identity: macOSSigning?.signingIdentity,
-      forceCodeSigning: true,
-      hardenedRuntime: true,
+      forceCodeSigning: macOSSigning !== undefined,
+      hardenedRuntime: macOSSigning !== undefined,
       // Native runtime files are pre-signed; PAK resources are sealed by their enclosing bundle.
       signIgnore: ['/Contents/Resources/dsh(?:/|$)', '\\.pak$'],
-      notarize: true,
+      notarize: macOSSigning !== undefined,
       target: ['dmg', 'zip'],
     },
     dmg: {
@@ -89,20 +94,16 @@ export function createElectronBuilderConfig(
       await verifyDesktopRuntime(join(context.packager.getResourcesDir(context.appOutDir), 'dsh'),
         context.packager.appInfo.version, { platform: resolvedPlatform, arch: resolvedArch })
     },
-    afterSign: async context => {
+    afterSign: macOSSigning === undefined ? undefined : async context => {
       if (context.electronPlatformName !== 'darwin') return
       const { verifyDesktopRuntime } = await import('./lib/types/runtime-tree.js')
       await verifyDesktopRuntime(join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, 'Contents', 'Resources', 'dsh'),
         context.packager.appInfo.version, { platform: 'darwin', arch: resolvedArch })
-      verifyMacOSSignatureAfterSign(context, macOSSigning ?? resolveMacOSSigningEnvironment(env))
+      verifyMacOSSignatureAfterSign(context, macOSSigning)
     },
-    artifactBuildCompleted: artifact => {
+    artifactBuildCompleted: macOSSigning === undefined ? undefined : artifact => {
       if (!artifact.file.endsWith('.dmg')) return
-      return notarizeMacOSDiskImageArtifact(
-        artifact,
-        env,
-        macOSSigning ?? resolveMacOSSigningEnvironment(env),
-      )
+      return notarizeMacOSDiskImageArtifact(artifact, env, macOSSigning)
     },
     win: {
       forceCodeSigning: !unsigned,
