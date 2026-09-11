@@ -64,6 +64,9 @@ function runtimeFiles(root: string): { path: string; name: string }[] {
       const path = join(directory, entry.name)
       const name = relative(root, path).split(sep).join('/')
       if (name === DESKTOP_RUNTIME_FILE) continue
+      // Finder and iCloud write metadata (`.DS_Store`, AppleDouble `._*`) into
+      // any directory they touch; it is not payload and can appear after sealing.
+      if (entry.isFile() && (entry.name === '.DS_Store' || entry.name.startsWith('._'))) continue
       if (entry.isDirectory()) visit(path)
       else if (entry.isFile()) files.push({ path, name })
       else throw new Error(`desktop runtime: unsupported filesystem entry ${name}`)
@@ -207,7 +210,18 @@ export async function verifyDesktopRuntime(
   const comparable = (items: readonly DesktopRuntimeFile[]): unknown => process.platform === 'win32'
     ? items.map(({ executable: _executable, ...item }) => item) : items
   if (JSON.stringify(comparable(descriptor.files)) !== JSON.stringify(comparable(actual))) {
-    throw new Error('desktop runtime: integrity verification failed')
+    const byPath = new Map(actual.map(entry => [entry.path, entry]))
+    const diffs: string[] = []
+    for (const entry of descriptor.files) {
+      const live = byPath.get(entry.path)
+      if (live === undefined) { diffs.push(`missing ${entry.path}`); continue }
+      if (live.sha256 !== entry.sha256 || live.bytes !== entry.bytes || live.executable !== entry.executable) {
+        diffs.push(`changed ${entry.path}`)
+      }
+    }
+    const known = new Set(descriptor.files.map(entry => entry.path))
+    for (const entry of actual) if (!known.has(entry.path)) diffs.push(`extra ${entry.path}`)
+    throw new Error(`desktop runtime: integrity verification failed: ${diffs.slice(0, 12).join(', ')}`)
   }
   return descriptor
 }
