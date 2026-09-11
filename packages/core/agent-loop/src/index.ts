@@ -7,6 +7,8 @@
 
 import { Context, FiberState, Service } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
+import { mkdirSync } from 'node:fs'
+import { isAbsolute } from 'node:path'
 import z from '@deepseek-ai/schemastery'
 import { z as zod } from 'zod'
 import { brandString } from '@deepseek-ai/dsh-brand'
@@ -321,6 +323,12 @@ export interface Config {
    * omission defaults to {@link DEFAULT_MAX_PARALLEL_TOOL_CALLS}.
    */
   maxParallelToolCalls?: number
+  /**
+   * Absolute working directory for Sessions created without one (project-free
+   * conversations). Their prompt `{{cwd}}`, tool resolution, and sandbox
+   * write boundary all use it; the directory is created on first use.
+   */
+  defaultCwd?: string
   /** Agents created or resumed at plugin startup. */
   agents: (AgentOptions & {
     /** Stable config label used in logs and as the fresh combined-id prefix. */
@@ -362,6 +370,7 @@ export class AgentLoop extends Service implements AgentFactory {
   /** Runtime schema for declarative agents. */
   static Config = z.object({
     maxParallelToolCalls: z.number().step(1).min(1).default(DEFAULT_MAX_PARALLEL_TOOL_CALLS),
+    defaultCwd: z.string(),
     agents: z.array(z.object({
       id: z.string().required(),
       sessionId: z.string().min(1),
@@ -410,6 +419,9 @@ export class AgentLoop extends Service implements AgentFactory {
         onChange: () => {},
       })
     })
+    if (config.defaultCwd !== undefined && !isAbsolute(config.defaultCwd)) {
+      throw new Error(`agent-loop: defaultCwd must be an absolute path, got ${JSON.stringify(config.defaultCwd)}`)
+    }
     validateConfiguredAgents(this.config.agents)
     // Register only after every config validation above has passed, so a
     // rejected constructor leaves no projection unit behind.
@@ -700,7 +712,10 @@ export class AgentLoop extends Service implements AgentFactory {
    * @returns the published running agent.
    */
   async create(id: SessionId, options: AgentOptions = {}, meta: Pick<SessionHeader, 'cwd'> = {}): Promise<Agent> {
-    using preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(id, { meta }))
+    using preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(
+      id,
+      { meta: this.resolveCreateMeta(meta) },
+    ))
     const stored = await this.createStoredSession(preparation.session)
     let prepared: PreparedAgent
     try {
@@ -717,6 +732,21 @@ export class AgentLoop extends Service implements AgentFactory {
       void prepared.dispose().catch(() => {})
       throw error
     }
+  }
+
+  /**
+   * Resolve fresh-session metadata against the configured output directory.
+   * @param meta - caller-supplied fresh-session metadata.
+   * @returns metadata carrying a cwd, borrowing the default for project-free
+   *   Sessions and materializing it once so shell workdirs and sandbox roots
+   *   resolve without a per-call fallback.
+   */
+  private resolveCreateMeta(meta: Pick<SessionHeader, 'cwd'>): Pick<SessionHeader, 'cwd'> {
+    if (meta.cwd !== undefined) return meta
+    const cwd = this.config.defaultCwd
+    if (cwd === undefined) return meta
+    mkdirSync(cwd, { recursive: true })
+    return { cwd }
   }
 
   /**
@@ -768,7 +798,7 @@ export class AgentLoop extends Service implements AgentFactory {
   async createAgent(ownerCtx: Context, options: CreateAgentOptions): Promise<AgentHandle> {
     const preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(options.sessionId, {
       ...options.seed === undefined ? {} : { seed: options.seed },
-      ...options.meta === undefined ? {} : { meta: options.meta },
+      meta: this.resolveCreateMeta(options.meta ?? {}),
       ...options.inheritedEventCount === undefined ? {} : { inheritedEventCount: options.inheritedEventCount },
     }))
     const published = (async () => {

@@ -1,3 +1,7 @@
+import { randomUUID } from 'node:crypto'
+import { existsSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import LlmRuntime, { createUserMessage, ToolCallId, LlmError, ReasoningEffortId, StreamChunk, expandAssistantStream } from '@deepseek-ai/dsh-llm'
@@ -15,7 +19,7 @@ function driverDone(agent: Agent): Promise<void> {
   return (agent as Agent & { done: Promise<void> }).done
 }
 
-async function harness(adapter: MockAdapter, persona = '') {
+async function harness(adapter: MockAdapter, persona = '', defaultCwd?: string) {
   const ctx = new Context()
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(SessionStore)
@@ -23,7 +27,10 @@ async function harness(adapter: MockAdapter, persona = '') {
   await ctx.plugin(SystemPrompt, { personaPrefix: persona })
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(AgentRegistry)
-  await ctx.plugin(AgentLoop, { agents: [] })
+  await ctx.plugin(AgentLoop, {
+    agents: [],
+    ...(defaultCwd === undefined ? {} : { defaultCwd }),
+  })
   ctx.llm.registerAdapter(['mock'], adapter)
   return ctx
 }
@@ -563,6 +570,35 @@ describe('agent loop', () => {
 
     expect(systemOf(adapter.requests[0]))
       .toBe(`You are an AI agent powered by DeepSeek Halyard.\n\nWorking in ${process.cwd()}.`)
+  })
+
+  it('assigns the configured default directory to a project-free session', async () => {
+    const adapter = new MockAdapter([textResponse('ok')])
+    const dir = join(tmpdir(), `halyard-project-free-${randomUUID()}`)
+    const ctx = await harness(adapter, 'Working in {{cwd}}.', dir)
+    try {
+      const handle = await ctx.agents.create({
+        sessionId: SessionId('s-default-cwd'),
+        agentOptions: { provider: 'mock', model: 'mock' },
+      })
+      const agent = handle.agent
+      expect(agent.session.header.cwd).toBe(dir)
+      expect(existsSync(dir)).toBe(true)
+
+      send(agent, 'hi')
+      await waitForIdle(ctx, agent)
+      expect(systemOf(adapter.requests[0]))
+        .toBe(`You are an AI agent powered by DeepSeek Halyard.\n\nWorking in ${dir}.`)
+    } finally {
+      await ctx.fiber.dispose()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects a relative defaultCwd at load', async () => {
+    const adapter = new MockAdapter([])
+    await expect(harness(adapter, '', 'relative/output'))
+      .rejects.toThrow('defaultCwd must be an absolute path')
   })
 
   it('contains a strict-variable render failure: the turn errors, the loop keeps serving turns', async () => {
