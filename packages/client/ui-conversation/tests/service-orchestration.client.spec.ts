@@ -860,3 +860,71 @@ describe('InputHub queue steering (empty-draft accelerated Enter)', () => {
     await b.runtime.dispose()
   })
 })
+
+describe('project-free first-send promotion', () => {
+  /** Bench with a blank project-free session and a stubbed successor. */
+  async function promotionBench() {
+    const runtime = await SlotTestRuntime.create()
+    const prompt = vi.fn((
+      _content?: unknown, _mode?: unknown, _signal?: AbortSignal, _rpcId?: string,
+    ) => Promise.resolve({ ok: true as const, value: { accepted: true as const } }))
+    const retire: { onRetire?: ((retirement: PendingSubmissionRetirement) => void) | undefined } = {}
+    const abandon = vi.fn()
+    const beginSubmission = vi.fn((input: BeginSubmissionInput) => {
+      retire.onRetire = input.onRetire
+      return { requestId: 'req-promo' as never, abandon }
+    })
+    await runtime.sessions.add({
+      id: 'blank-1',
+      summary: { blank: true },
+      session: { prompt },
+    })
+    await runtime.sessions.add({
+      id: 'topic-1',
+      summary: { blank: false, cwd: '/tmp/topic-1' },
+      session: { prompt, beginSubmission },
+    }, { current: false })
+    runtime.sessions.stubCreate(async () => 'topic-1' as SessionId)
+    const hub = new InputHub(runtime.ctx, makeTranslate(zh, {}))
+    const fiber = runtime.ctx.plugin(ConversationController, {
+      input: hub,
+      blocks: new ComposerBlockRegistry(),
+      maxConcurrentFileUploads: 2,
+    })
+    await fiber.await()
+    const controller = runtime.ctx.get('conversation') as ConversationController
+    const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:promo-1')
+    const revoked = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined)
+    const restore = () => {
+      created.mockRestore()
+      revoked.mockRestore()
+    }
+    return { runtime, fiber, controller, hub, prompt, beginSubmission, retire, restore }
+  }
+
+  it('clears carried attachments from the successor composer once the promoted send settles', async () => {
+    const b = await promotionBench()
+    try {
+      const binding = b.runtime.sessions.binding('blank-1')!
+      const shell = b.hub.shell('blank-1' as SessionId)
+      const [attachment] = b.controller.createDrafts(binding.session.sessionId, [
+        new File([Uint8Array.of(1)], 'first.png', { type: 'image/png' }),
+      ])
+      if (attachment === undefined) throw new Error('image draft missing')
+      expect(shell.addAttachments([attachment.id])).toBe(true)
+      shell.setDraft('brand new topic')
+      shell.submit('queue')
+
+      await vi.waitFor(() => { expect(b.beginSubmission).toHaveBeenCalledOnce() })
+      expect(b.runtime.sessions.calls.filter(call => call.method === 'create')).toHaveLength(1)
+      const successor = b.hub.shell('topic-1' as SessionId)
+      expect(successor.snapshot.attachmentIds).toEqual([attachment.id])
+
+      b.retire.onRetire?.({ reason: 'observed', attachments: [] })
+      await vi.waitFor(() => { expect(successor.snapshot.attachmentIds).toEqual([]) })
+    } finally {
+      b.restore()
+    }
+    await b.runtime.dispose()
+  })
+})

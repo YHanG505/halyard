@@ -220,9 +220,29 @@ export class InputHub implements SessionInputResolver {
     const send = (target: SessionFace): Promise<SubmitOutcome> =>
       this.conversation().sendSession(target, text, attachmentIds, mode, signal)
     return this.promoteProjectFree(session, text, attachmentIds).then(
-      target => send(target ?? session),
+      (target) => {
+        if (target === undefined) return send(session)
+        return send(target).then((outcome) => {
+          if (outcome.kind === 'success') this.clearCarriedAttachments(target, attachmentIds)
+          return outcome
+        })
+      },
       () => send(session),
     )
+  }
+
+  /**
+   * Remove the ids carried into a successor Session once its promoted send is
+   * admitted. The successor rail held them only so the switched-to composer
+   * kept its attachments during the send; a failed send keeps them there for
+   * correction.
+   * @param target - the successor Session the send addressed.
+   * @param attachmentIds - ids carried into the successor shell.
+   */
+  private clearCarriedAttachments(target: SessionFace, attachmentIds: readonly DraftAttachmentId[]): void {
+    if (attachmentIds.length === 0) return
+    const successor = this.shell(target.sessionId)
+    for (const id of attachmentIds) successor.removeAttachment(id)
   }
 
   /**
