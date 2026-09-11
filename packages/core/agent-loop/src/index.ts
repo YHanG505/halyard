@@ -420,7 +420,10 @@ export class AgentLoop extends Service implements AgentFactory {
     ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')
     ctx.systemPrompt.variable('provider', context => context.agent?.options.provider)
     ctx.systemPrompt.variable('model', context => context.agent?.options.model)
-    ctx.systemPrompt.variable('cwd', context => context.agent?.session.header.cwd)
+    // A project-free Session has no header cwd; tools resolve relative paths
+    // from their provider default (process.cwd()), so the variable reports the
+    // same directory instead of leaving a strict {{cwd}} reference unset.
+    ctx.systemPrompt.variable('cwd', context => context.agent?.session.header.cwd ?? process.cwd())
 
     for (const { id, sessionId, cwd, resumeSessionId, ...options } of this.config.agents) {
       const meta = cwd === undefined ? {} : { cwd }

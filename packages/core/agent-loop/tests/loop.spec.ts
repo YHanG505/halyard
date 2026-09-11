@@ -549,10 +549,28 @@ describe('agent loop', () => {
     expect(systemOf(adapter.requests[0])).toBe('You are an AI agent powered by DeepSeek Halyard.\n\nWorking in /work/space.')
   })
 
+  it('reports the host working directory for {{cwd}} in a project-free session', async () => {
+    const adapter = new MockAdapter([textResponse('ok')])
+    const ctx = await harness(adapter, 'Working in {{cwd}}.')
+    const handle = await ctx.agents.create({
+      sessionId: SessionId('s-project-free'),
+      agentOptions: { provider: 'mock', model: 'mock' },
+    })
+
+    const agent = handle.agent
+    send(agent, 'hi')
+    await waitForIdle(ctx, agent)
+
+    expect(systemOf(adapter.requests[0]))
+      .toBe(`You are an AI agent powered by DeepSeek Halyard.\n\nWorking in ${process.cwd()}.`)
+  })
+
   it('contains a strict-variable render failure: the turn errors, the loop keeps serving turns', async () => {
-    // A missing cwd variable must fail one turn without preventing a later valid turn.
+    // A registered variable without a value must fail one turn without
+    // preventing a later valid turn.
     const adapter = new MockAdapter([textResponse('ok after rescue')])
-    const ctx = await harness(adapter, 'In {{cwd}}.')
+    const ctx = await harness(adapter, 'In {{absent}}.')
+    ctx.systemPrompt.variable('absent', () => undefined)
     const errors: Error[] = []
     ctx.on('agent/error', ({ error }) => {
       if (error instanceof Error) errors.push(error)
@@ -564,7 +582,7 @@ describe('agent loop', () => {
 
     expect(adapter.requests).toHaveLength(0) // the request was never sent
     expect(errors.map(error => error.message)).toEqual([
-      'prompt variable "{{cwd}}" has no value for this assembly (section "deployment:persona-prefix")',
+      'prompt variable "{{absent}}" has no value for this assembly (section "deployment:persona-prefix")',
     ])
     const turnEnd = agent.session.snapshotEvents().find(e => e.type === 'turn/end')
     expect(turnEnd?.type === 'turn/end' && turnEnd.data.reason.kind).toBe('error')
@@ -572,10 +590,10 @@ describe('agent loop', () => {
       ? turnEnd.data.reason.error.message
       : '').toContain('no value for this assembly')
 
-    // The loop survived: a waterfall listener rescues {{cwd}} and the SAME
+    // The loop survived: a waterfall listener rescues {{absent}} and the SAME
     // agent completes a real model turn.
     ctx.on('system-prompt/assemble', async (assembly, _context, next) => {
-      assembly.variables['cwd'] = '/rescued'
+      assembly.variables['absent'] = '/rescued'
       return next()
     })
     send(agent, 'again')
