@@ -87,7 +87,7 @@ describe('UsageSection', () => {
       balance: vi.fn().mockResolvedValue({ ok: true, value: BALANCE_OK }),
     }
     render(<UsageSection remote={remote} t={t} />)
-    await waitFor(() => expect(remote.summary).toHaveBeenCalledTimes(1))
+    await waitFor(() => { expect(remote.summary).toHaveBeenCalledTimes(1) })
     const week = screen.getByRole('button', { name: en.rangeWeek })
     await act(async () => {
       week.click()
