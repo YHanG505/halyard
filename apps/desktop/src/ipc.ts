@@ -21,6 +21,7 @@ export const DESKTOP_IPC = {
   updatesCheck: 'dsh-desktop:updates-check',
   updatesInstall: 'dsh-desktop:updates-install',
   updatesState: 'dsh-desktop:updates-state',
+  updatesStatus: 'dsh-desktop:updates-status',
 } as const
 
 /** Desktop release update state rendered by desktop-owned UI. */
@@ -48,6 +49,17 @@ export interface DshDesktopApi {
     subscribe(listener: (state: DesktopBackendState) => void): () => void
   }
   readonly updates: {
+    check(): Promise<DesktopUpdateState>
+    install(): Promise<void>
+    subscribe(listener: (state: DesktopUpdateState) => void): () => void
+  }
+}
+
+/** Release-update controls available to backend-provided application documents. */
+export interface DshDesktopAppApi {
+  readonly protocolVersion: 1
+  readonly updates: {
+    status(): Promise<DesktopUpdateState>
     check(): Promise<DesktopUpdateState>
     install(): Promise<void>
     subscribe(listener: (state: DesktopUpdateState) => void): () => void

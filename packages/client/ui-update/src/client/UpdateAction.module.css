@@ -1,0 +1,14 @@
+.row {
+  display: flex;
+  padding: 0 8px 6px;
+}
+
+.button {
+  width: 100%;
+}
+
+.error {
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary, var(--dsw-alias-label-tertiary));
+}

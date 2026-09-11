@@ -66,6 +66,7 @@
     "@deepseek-ai/dsh-client-ui-goal": "workspace:^",
     "@deepseek-ai/dsh-client-ui-input-trigger": "workspace:^",
     "@deepseek-ai/dsh-client-ui-jobs": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-update": "workspace:^",
     "@deepseek-ai/dsh-client-ui-layout": "workspace:^",
     "@deepseek-ai/dsh-client-ui-message-feedback": "workspace:^",
     "@deepseek-ai/dsh-client-ui-model-selection": "workspace:^",

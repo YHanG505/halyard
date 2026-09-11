@@ -37,8 +37,11 @@ function main(): void {
   if (archArgument !== 'arm64' && archArgument !== 'x64') {
     throw new Error(`local-dmg: unsupported architecture ${JSON.stringify(archArgument)}; use arm64 or x64`)
   }
+  // Every workspace package shares the release-family version, and the bundle
+  // verification binds it end to end; a release bumps it first through
+  // `pnpm run release:dsh <version>`.
   const manifest = JSON.parse(readFileSync(join(appRoot, 'package.json'), 'utf8')) as { version: string }
-  const version = process.env.HALYARD_VERSION ?? manifest.version
+  const version = manifest.version
   const buildEnv: NodeJS.ProcessEnv = {
     ...process.env,
     DSH_DESKTOP_APP_ID: process.env.DSH_DESKTOP_APP_ID ?? appId,

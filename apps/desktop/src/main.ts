@@ -1,5 +1,6 @@
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -20,6 +21,7 @@ import { DESKTOP_IPC, type DesktopUpdateState } from './ipc.ts'
 import { formatDesktopMessage, resolveDesktopLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
 import { DesktopUpdateCoordinator } from './update-coordinator.ts'
+import { DEFAULT_UPDATE_REPO, GithubUpdateCoordinator } from './github-updater.ts'
 import { desktopErrorState } from './startup-error.ts'
 import { startupFailureDocument } from './startup-document.ts'
 
@@ -272,13 +274,21 @@ async function main(): Promise<void> {
     return startup
   }
 
-  const updates = new DesktopUpdateCoordinator(
-    publishUpdate,
-    async () => {
-      shellInstallerOwnsQuit = true
-      await backend.stop()
-    },
-  )
+  const stopBeforeRestart = async (): Promise<void> => {
+    shellInstallerOwnsQuit = true
+    await backend.stop()
+  }
+  // A signed release ships `app-update.yml` and uses electron-updater; an
+  // unsigned local build has no feed and checks the fork's GitHub releases.
+  const updates = existsSync(join(process.resourcesPath, 'app-update.yml'))
+    ? new DesktopUpdateCoordinator(publishUpdate, stopBeforeRestart)
+    : app.isPackaged
+      ? new GithubUpdateCoordinator({
+          repo: process.env.HALYARD_GITHUB_REPO ?? DEFAULT_UPDATE_REPO,
+          publish: publishUpdate,
+          beforeRestart: stopBeforeRestart,
+        })
+      : new DesktopUpdateCoordinator(publishUpdate, stopBeforeRestart)
 
   protocol.handle(SCHEME, (request) => {
     const url = new URL(request.url)
@@ -371,12 +381,16 @@ async function main(): Promise<void> {
     }
   })
   ipcMain.handle(DESKTOP_IPC.updatesCheck, async (event) => {
-    assertDesktopSender(event, ['shell'])
+    assertDesktopSender(event, ['shell', 'app'])
     return updates.check()
   })
   ipcMain.handle(DESKTOP_IPC.updatesInstall, async (event) => {
-    assertDesktopSender(event, ['shell'])
+    assertDesktopSender(event, ['shell', 'app'])
     await updates.install()
+  })
+  ipcMain.handle(DESKTOP_IPC.updatesStatus, (event) => {
+    assertDesktopSender(event, ['shell', 'app'])
+    return updateState
   })
 
   const checkAndPrompt = async (manual: boolean): Promise<void> => {
@@ -501,6 +515,9 @@ async function main(): Promise<void> {
   }
   publishUpdate(updateState)
   setTimeout(() => { void checkAndPrompt(false) }, 10_000)
+  // Long-running windows re-check so the sidebar prompt appears without a relaunch.
+  const updatePoller = setInterval(() => { void checkAndPrompt(false) }, 6 * 60 * 60 * 1000)
+  updatePoller.unref?.()
 }
 
 const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })

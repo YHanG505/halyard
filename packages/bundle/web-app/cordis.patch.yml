@@ -348,6 +348,11 @@
     - id: ui-jobs
       name: '@deepseek-ai/dsh-client-ui-jobs'
 
+    # Packaged desktop app: the sidebar footer prompt over the shell's
+    # release-update bridge (renders nothing in a browser).
+    - id: ui-update
+      name: '@deepseek-ai/dsh-client-ui-update'
+
     # Goal surface: GoalBar in the input dock over the goal session projection.
     - id: ui-goal
       name: '@deepseek-ai/dsh-client-ui-goal'

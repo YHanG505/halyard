@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { DESKTOP_IPC, type DshDesktopStartupApi } from '../src/ipc.ts'
+import { DESKTOP_IPC, type DshDesktopAppApi, type DshDesktopStartupApi } from '../src/ipc.ts'
 
 const electron = vi.hoisted(() => ({
   contextBridge: { exposeInMainWorld: vi.fn() },
@@ -9,10 +9,33 @@ vi.mock('electron', () => electron)
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); vi.resetModules() })
 
-it.each(['dsh-app://app/index.html', 'https://shell/startup.html'])('exposes only the carrier marker to %s', async (url) => {
-  vi.stubGlobal('location', new URL(url))
+it.each(['https://shell/startup.html', 'dsh-app://unknown/index.html'])(
+  'exposes only the carrier marker to unowned documents (%s)',
+  async (url) => {
+    vi.stubGlobal('location', new URL(url))
+    await import('../src/preload-app.ts')
+    expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  },
+)
+
+it('provides the update bridge to application documents', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/index.html'))
   await import('../src/preload-app.ts')
-  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls[0]?.[1] as DshDesktopAppApi
+  await api.updates.status()
+  await api.updates.check()
+  await api.updates.install()
+  expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+    [DESKTOP_IPC.updatesStatus], [DESKTOP_IPC.updatesCheck], [DESKTOP_IPC.updatesInstall],
+  ])
+  const listener = vi.fn()
+  const dispose = api.updates.subscribe(listener)
+  const handler = electron.ipcRenderer.on.mock.calls[0]?.[1] as (event: unknown, state: unknown) => void
+  handler({}, { phase: 'available', version: '1.0.0' })
+  expect(listener).toHaveBeenCalledWith({ phase: 'available', version: '1.0.0' })
+  dispose()
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.updatesState, handler)
+  expect(api).not.toHaveProperty('plugins')
 })
 
 it('provides startup controls and a removable state subscription to shell documents', async () => {
