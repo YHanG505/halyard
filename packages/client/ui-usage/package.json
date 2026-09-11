@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-usage",
   "description": "Usage dashboard settings section and live sidebar card (balance, totals, charts) over the usage Remote",
-  "version": "0.1.5-rc.2",
+  "version": "0.1.5-rc.2.halyard.1",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-update",
   "description": "Packaged-app release update prompt as a sidebar footer action",
-  "version": "0.1.5-rc.2",
+  "version": "0.1.5-rc.2.halyard.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
