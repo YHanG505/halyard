@@ -72,7 +72,7 @@
 }
 
 .divider {
-  height: 1px;
+  height: 0.5px;
   margin: 4px 0;
   background: var(--dsw-alias-border-l2);
 }

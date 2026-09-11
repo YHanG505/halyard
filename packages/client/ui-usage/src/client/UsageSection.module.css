@@ -85,7 +85,7 @@
 
 .rangeButton {
   appearance: none;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0.5px solid var(--dsw-alias-border-l2);
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-secondary);
   border-radius: 8px;
@@ -189,7 +189,7 @@
 .table td {
   text-align: left;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
   white-space: nowrap;
 }
 
@@ -227,7 +227,7 @@
 
 .retryButton {
   appearance: none;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0.5px solid var(--dsw-alias-border-l2);
   background: transparent;
   color: var(--dsw-alias-label-primary);
   border-radius: 8px;
@@ -264,6 +264,7 @@
 }
 
 .splitTrack {
+  corner-shape: round;
   height: 6px;
   border-radius: 999px;
   background: var(--dsw-alias-border-l2);
@@ -385,6 +386,7 @@
 }
 
 .shareTrack {
+  corner-shape: round;
   height: 8px;
   border-radius: 999px;
   background: var(--dsw-alias-border-l2);
@@ -392,6 +394,7 @@
 }
 
 .shareFill {
+  corner-shape: round;
   height: 100%;
   border-radius: 999px;
   background: var(--dsw-alias-brand-primary);
