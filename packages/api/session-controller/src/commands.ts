@@ -2,6 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
+import { createProjectFreeDirectory } from './project-free-dir.ts'
 import { brandString } from '@deepseek-ai/dsh-brand'
 import type { Agent, ModelSelection as AgentModelSelection } from '@deepseek-ai/dsh-agent'
 import { AttachmentError } from '@deepseek-ai/dsh-attachment'
@@ -73,10 +74,12 @@ export class SessionCommandController {
   /**
    * @param ctx - Host context carrying Agent, model, attachment, title, and Workspace services.
    * @param agents - sole owner of create, resume, and Session-local model selection.
+   * @param projectFreeRoot - absolute output root for named project-free conversations.
    */
   constructor(
     private readonly ctx: Context,
     private readonly agents: ApiSessionAgentController,
+    private readonly projectFreeRoot?: string,
   ) {}
 
   /**
@@ -98,7 +101,7 @@ export class SessionCommandController {
         })
       }
     }
-    const cwd = workspace?.path ?? request.cwd
+    const cwd = workspace?.path ?? request.cwd ?? this.projectFreeCwd(request.projectFreeName)
     let adopted: Agent
     try {
       adopted = await this.agents.ensureSession(
@@ -123,6 +126,16 @@ export class SessionCommandController {
     }
     const agentPreset = this.agents.presetForSession(adopted.session)
     return { sessionId, ...(agentPreset === undefined ? {} : { agentPreset }) }
+  }
+
+  /**
+   * Materialize the topic directory for a named project-free conversation.
+   * @param name - topic phrase from the create request.
+   * @returns the created absolute directory, or undefined without a name or root.
+   */
+  private projectFreeCwd(name: string | undefined): string | undefined {
+    if (name === undefined || this.projectFreeRoot === undefined) return undefined
+    return createProjectFreeDirectory(this.projectFreeRoot, name)
   }
 
   /**

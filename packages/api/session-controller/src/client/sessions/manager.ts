@@ -555,12 +555,19 @@ export class SessionManager {
       workspaceId?: WorkspaceId
       cwd?: string
       sessionId?: SessionId
+      projectFreeName?: string
     } = {},
   ): Promise<RemoteResult<{ sessionId: SessionId }>> {
     const shared = opts.sessionId === undefined ? {} : { sessionId: opts.sessionId }
     const payload = opts.workspaceId !== undefined
       ? { workspaceId: opts.workspaceId, ...shared }
-      : { ...(opts.cwd === undefined ? {} : { cwd: opts.cwd }), ...shared }
+      : {
+          ...(opts.cwd === undefined ? {} : { cwd: opts.cwd }),
+          ...(opts.cwd === undefined && opts.projectFreeName !== undefined
+            ? { projectFreeName: opts.projectFreeName }
+            : {}),
+          ...shared,
+        }
     const result = await this.remote.session.create(payload)
     if (result.ok) {
       this.recordMutation({ kind: 'upsert', summary: {

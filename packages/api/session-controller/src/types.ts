@@ -269,6 +269,12 @@ export interface SessionCreateRequest {
   readonly cwd?: string
   readonly sessionId?: SessionId
   readonly agentPreset?: string
+  /**
+   * Topic phrase for a project-free conversation: the controller derives a
+   * uniquely named directory under its configured `projectFreeRoot` and uses
+   * it as the Session cwd. Ignored when `workspaceId` or `cwd` is present.
+   */
+  readonly projectFreeName?: string
 }
 
 /** Session creation response value. */

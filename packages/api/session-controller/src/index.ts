@@ -1,6 +1,7 @@
 /** Session Remote owner: cold reads, explicit Agent commands, and live control state. */
 
 import { hostname } from 'node:os'
+import { isAbsolute } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { errorChain } from '@deepseek-ai/dsh-llm'
@@ -73,6 +74,12 @@ declare module '@deepseek-ai/cordis' {
 export interface Config {
   /** Override platform desktop-opener detection. */
   readonly nativeOpen?: boolean
+  /**
+   * Absolute root for project-free conversation directories. A create
+   * request carrying `projectFreeName` materializes one uniquely named
+   * subdirectory here and uses it as the Session cwd.
+   */
+  readonly projectFreeRoot?: string
 }
 
 /** Host integrations replaceable by direct unit tests. */
@@ -103,6 +110,7 @@ export class SessionController extends TypertRemoteService {
 
   static Config: z<Config> = z.object({
     nativeOpen: z.boolean(),
+    projectFreeRoot: z.string(),
   })
 
   private readonly agents: ApiSessionAgentController
@@ -122,9 +130,12 @@ export class SessionController extends TypertRemoteService {
    */
   constructor(ctx: Context, config: Config, internals: SessionControllerInternals = {}) {
     super(ctx, 'sessionController', { namespace: 'session' })
+    if (config.projectFreeRoot !== undefined && !isAbsolute(config.projectFreeRoot)) {
+      throw new Error(`session-controller: projectFreeRoot must be an absolute path, got ${JSON.stringify(config.projectFreeRoot)}`)
+    }
     installModelSelectionProjection(ctx)
     this.agents = new ApiSessionAgentController(ctx)
-    this.commands = new SessionCommandController(ctx, this.agents)
+    this.commands = new SessionCommandController(ctx, this.agents, config.projectFreeRoot)
     ctx.effect(() => ctx.fileUploads.registerAgentResolver(async (sessionId) => {
       const result = await this.agents.resolveAgent(sessionId)
       if ('error' in result) throw result.error

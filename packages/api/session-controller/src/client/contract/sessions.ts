@@ -36,6 +36,8 @@ export interface ISessions {
     workspaceId?: WorkspaceId
     cwd?: string
     sessionId?: SessionId
+    /** Topic phrase: the Host allocates a named project-free conversation directory for it. */
+    projectFreeName?: string
   }): Promise<SessionId>
   /**
    * Select a session as current.

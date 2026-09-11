@@ -46,7 +46,7 @@ Agents declared in the config start automatically when the plugin loads. Each en
 | Field | Default | Meaning |
 |---|---|---|
 | `maxParallelToolCalls` | `10` | Parallel-safe tool calls in flight per step; `1` is serial |
-| `defaultCwd` | — | Absolute working directory for Sessions created without one (project-free conversations); created on first use |
+| `defaultCwd` | — | Absolute fallback reported by `{{cwd}}` for Sessions created without one (project-free conversations) |
 | `agents[].id` | required | Stable label; a fresh session mints `${id}-session-<uuid>` unless `sessionId` is set |
 | `agents[].provider` / `agents[].model` | — | Model route; both required before dispatch |
 | `agents[].reasoningEffort` | — | Non-empty initial reasoning effort; `agent/request` may override it |
@@ -150,7 +150,7 @@ The package-level contract is enough for most consumers; read these when you nee
 
 #### What the model sees
 
-For each step, the loop sends the session's derived messages and visible tool schemas. Non-empty `system/message` nodes carry the prompt, with the latest as the effective version; an empty rendering clears all prompt versions from derived history. It supplies `provider`, `model`, and `cwd` variable values but no additional fixed prose. A project-free Session has no requested cwd, so creation borrows `defaultCwd` when configured (the shipped Web profile pins a Documents output folder), and `cwd` falls back to the host process working directory only when neither exists.
+For each step, the loop sends the session's derived messages and visible tool schemas. Non-empty `system/message` nodes carry the prompt, with the latest as the effective version; an empty rendering clears all prompt versions from derived history. It supplies `provider`, `model`, and `cwd` variable values but no additional fixed prose. A project-free Session has no requested cwd: `cwd` reports the configured `defaultCwd` (the shipped Web profile pins a Documents output root), falling back to the host process working directory only when neither exists. The Web host allocates a per-conversation topic directory before the first prompt, so the fallback covers resumed Sessions that predate that directory.
 
 #### Token effect
 

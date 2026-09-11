@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
@@ -572,7 +571,7 @@ describe('agent loop', () => {
       .toBe(`You are an AI agent powered by DeepSeek Halyard.\n\nWorking in ${process.cwd()}.`)
   })
 
-  it('assigns the configured default directory to a project-free session', async () => {
+  it('reports the configured default directory for a project-free session', async () => {
     const adapter = new MockAdapter([textResponse('ok')])
     const dir = join(tmpdir(), `halyard-project-free-${randomUUID()}`)
     const ctx = await harness(adapter, 'Working in {{cwd}}.', dir)
@@ -582,8 +581,8 @@ describe('agent loop', () => {
         agentOptions: { provider: 'mock', model: 'mock' },
       })
       const agent = handle.agent
-      expect(agent.session.header.cwd).toBe(dir)
-      expect(existsSync(dir)).toBe(true)
+      // Creation never assigns the fallback: the header stays project-free.
+      expect(agent.session.header.cwd).toBeUndefined()
 
       send(agent, 'hi')
       await waitForIdle(ctx, agent)
@@ -591,7 +590,6 @@ describe('agent loop', () => {
         .toBe(`You are an AI agent powered by DeepSeek Halyard.\n\nWorking in ${dir}.`)
     } finally {
       await ctx.fiber.dispose()
-      rmSync(dir, { recursive: true, force: true })
     }
   })
 

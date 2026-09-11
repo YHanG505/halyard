@@ -7,7 +7,6 @@
 
 import { Context, FiberState, Service } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
 import { isAbsolute } from 'node:path'
 import z from '@deepseek-ai/schemastery'
 import { z as zod } from 'zod'
@@ -324,9 +323,10 @@ export interface Config {
    */
   maxParallelToolCalls?: number
   /**
-   * Absolute working directory for Sessions created without one (project-free
-   * conversations). Their prompt `{{cwd}}`, tool resolution, and sandbox
-   * write boundary all use it; the directory is created on first use.
+   * Absolute fallback reported by the prompt `{{cwd}}` variable for Sessions
+   * created without one (project-free conversations). Session creation itself
+   * never assigns it: a project-free conversation either has a host-allocated
+   * topic directory or stays cwd-less.
    */
   defaultCwd?: string
   /** Agents created or resumed at plugin startup. */
@@ -432,10 +432,11 @@ export class AgentLoop extends Service implements AgentFactory {
     ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')
     ctx.systemPrompt.variable('provider', context => context.agent?.options.provider)
     ctx.systemPrompt.variable('model', context => context.agent?.options.model)
-    // A project-free Session has no header cwd; tools resolve relative paths
-    // from their provider default (process.cwd()), so the variable reports the
-    // same directory instead of leaving a strict {{cwd}} reference unset.
-    ctx.systemPrompt.variable('cwd', context => context.agent?.session.header.cwd ?? process.cwd())
+    // A project-free Session has no header cwd: report the configured output
+    // directory, else the host process working directory, instead of leaving a
+    // strict {{cwd}} reference unset.
+    ctx.systemPrompt.variable('cwd', context =>
+      context.agent?.session.header.cwd ?? this.config.defaultCwd ?? process.cwd())
 
     for (const { id, sessionId, cwd, resumeSessionId, ...options } of this.config.agents) {
       const meta = cwd === undefined ? {} : { cwd }
@@ -712,10 +713,7 @@ export class AgentLoop extends Service implements AgentFactory {
    * @returns the published running agent.
    */
   async create(id: SessionId, options: AgentOptions = {}, meta: Pick<SessionHeader, 'cwd'> = {}): Promise<Agent> {
-    using preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(
-      id,
-      { meta: this.resolveCreateMeta(meta) },
-    ))
+    using preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(id, { meta }))
     const stored = await this.createStoredSession(preparation.session)
     let prepared: PreparedAgent
     try {
@@ -732,21 +730,6 @@ export class AgentLoop extends Service implements AgentFactory {
       void prepared.dispose().catch(() => {})
       throw error
     }
-  }
-
-  /**
-   * Resolve fresh-session metadata against the configured output directory.
-   * @param meta - caller-supplied fresh-session metadata.
-   * @returns metadata carrying a cwd, borrowing the default for project-free
-   *   Sessions and materializing it once so shell workdirs and sandbox roots
-   *   resolve without a per-call fallback.
-   */
-  private resolveCreateMeta(meta: Pick<SessionHeader, 'cwd'>): Pick<SessionHeader, 'cwd'> {
-    if (meta.cwd !== undefined) return meta
-    const cwd = this.config.defaultCwd
-    if (cwd === undefined) return meta
-    mkdirSync(cwd, { recursive: true })
-    return { cwd }
   }
 
   /**
@@ -798,7 +781,7 @@ export class AgentLoop extends Service implements AgentFactory {
   async createAgent(ownerCtx: Context, options: CreateAgentOptions): Promise<AgentHandle> {
     const preparation = SessionPreparation.create(this.runtime.ctx.sessions.prepare(options.sessionId, {
       ...options.seed === undefined ? {} : { seed: options.seed },
-      meta: this.resolveCreateMeta(options.meta ?? {}),
+      ...options.meta === undefined ? {} : { meta: options.meta },
       ...options.inheritedEventCount === undefined ? {} : { inheritedEventCount: options.inheritedEventCount },
     }))
     const published = (async () => {

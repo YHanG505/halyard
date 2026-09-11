@@ -19,12 +19,34 @@
     personaPrefix: >-
       You are a coding agent powered by the {{model}} model.
 
-# Project-free conversations get one shared output directory instead of the
-# server's process working directory, so their files never land in the checkout.
+# Project-free conversations live under one Documents root: the first prompt
+# allocates a topic-named directory there, and the loop's fallback reports the
+# root for resumed cwd-less Sessions that predate that allocation.
 - id: agent-loop
   config:
     agents: []
     defaultCwd: !!js process.env.HOME + '/Documents/Halyard'
+
+# Resumed project-free Sessions that predate the topic-directory allocation
+# have no cwd; every tool and sandbox fallback resolves to the same Documents
+# root so their work never lands in the checkout.
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.env.HOME + '/Documents/Halyard'
+
+- id: fs-sandbox
+  config:
+    cwd: !!js process.env.HOME + '/Documents/Halyard'
+
+- id: bash-sandbox
+  config:
+    timeoutMs: 60000
+    cwd: !!js process.env.HOME + '/Documents/Halyard'
+
+- id: pwsh-sandbox
+  config:
+    cwd: !!js process.env.HOME + '/Documents/Halyard'
 
 # Full-text session search is opt-in (the base row's `openAt: never`). This
 # restatement keeps the Web values on one ephemeral in-memory index; a
@@ -112,9 +134,13 @@
     - id: plugin-inventory
       name: '@deepseek-ai/dsh-host-plugin-inventory'
 
-    # Session commands, cold reads, and live control over Typert Remote.
+    # Session commands, cold reads, and live control over Typert Remote. The
+    # first prompt of a project-free conversation allocates a topic-named
+    # directory under this root.
     - id: session-controller
       name: '@deepseek-ai/dsh-api-session-controller'
+      config:
+        projectFreeRoot: !!js process.env.HOME + '/Documents/Halyard'
 
     # Workspace file service: bounded read, directory listing, and the
     # agent-write change feed inside the session workspace root.
