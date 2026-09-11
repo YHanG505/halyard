@@ -284,10 +284,10 @@ async function main(): Promise<void> {
     ? new DesktopUpdateCoordinator(publishUpdate, stopBeforeRestart)
     : app.isPackaged
       ? new GithubUpdateCoordinator({
-          repo: process.env.HALYARD_GITHUB_REPO ?? DEFAULT_UPDATE_REPO,
-          publish: publishUpdate,
-          beforeRestart: stopBeforeRestart,
-        })
+        repo: process.env.HALYARD_GITHUB_REPO ?? DEFAULT_UPDATE_REPO,
+        publish: publishUpdate,
+        beforeRestart: stopBeforeRestart,
+      })
       : new DesktopUpdateCoordinator(publishUpdate, stopBeforeRestart)
 
   protocol.handle(SCHEME, (request) => {
@@ -522,7 +522,7 @@ async function main(): Promise<void> {
   setTimeout(() => { void checkAndPrompt(false) }, 10_000)
   // Long-running windows re-check so the sidebar prompt appears without a relaunch.
   const updatePoller = setInterval(() => { void checkAndPrompt(false) }, 6 * 60 * 60 * 1000)
-  updatePoller.unref?.()
+  updatePoller.unref()
 }
 
 const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })

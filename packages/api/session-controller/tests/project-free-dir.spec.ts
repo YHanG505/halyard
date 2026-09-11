@@ -39,7 +39,7 @@ describe('projectFreeDirName', () => {
 
   it('truncates by code points so surrogate pairs stay whole', () => {
     expect(projectFreeDirName('a'.repeat(80))).toBe('a'.repeat(48))
-    expect([...projectFreeDirName('😀'.repeat(80))]).toHaveLength(48)
+    expect(Array.from(projectFreeDirName('😀'.repeat(80)))).toHaveLength(48)
     expect(projectFreeDirName('😀'.repeat(80))).not.toContain('\uFFFD')
   })
 })

@@ -27,7 +27,7 @@ export function projectFreeDirName(phrase: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^[.\-\s]+|[.\-\s]+$/g, '')
-  const base = [...collapsed].slice(0, MAX_BASE_CODE_POINTS).join('')
+  const base = Array.from(collapsed).slice(0, MAX_BASE_CODE_POINTS).join('')
   return base === '' ? 'session' : base
 }
 

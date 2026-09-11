@@ -53,10 +53,10 @@ export function UpdateAction({ wide, t }: UpdateActionProps) {
     if (bridge === undefined) return
     let active = true
     void bridge.status().then(
-      next => { if (active) setState(next) },
+      (next) => { if (active) setState(next) },
       () => {},
     )
-    const dispose = bridge.subscribe(next => { setState(next) })
+    const dispose = bridge.subscribe((next) => { setState(next) })
     void bridge.check().catch(() => {})
     return () => { active = false; dispose() }
   }, [bridge])

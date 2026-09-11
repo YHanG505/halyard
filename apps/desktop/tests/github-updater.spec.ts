@@ -57,7 +57,7 @@ describe('GithubUpdateCoordinator', () => {
     const installArchive = vi.fn(async () => {})
     const relaunch = vi.fn()
     const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input)
+      const url = input instanceof URL ? input.href : typeof input === 'string' ? input : input.url
       if (url.includes('api.github.com')) {
         return releaseJson('0.1.5-rc.2.halyard.2', [
           { name: 'DeepSeek-Halyard-0.1.5-rc.2.halyard.2-mac-arm64.zip', url: 'https://x/zip' },
@@ -68,7 +68,7 @@ describe('GithubUpdateCoordinator', () => {
     const updates = new GithubUpdateCoordinator({
       repo: 'YHanG505/halyard',
       publish: (state) => { states.push(state); return state },
-      fetchImpl: fetchImpl as unknown as typeof fetch,
+      fetchImpl: fetchImpl,
       currentVersion: '0.1.5-rc.2',
       downloadRoot: tempRoot(),
       installArchive,
@@ -86,7 +86,7 @@ describe('GithubUpdateCoordinator', () => {
     const updates = new GithubUpdateCoordinator({
       repo: 'YHanG505/halyard',
       publish: state => state,
-      fetchImpl: (async () => releaseJson('0.1.5-rc.2', [])) as unknown as typeof fetch,
+      fetchImpl: async () => releaseJson('0.1.5-rc.2', []),
       currentVersion: '0.1.5-rc.2',
       downloadRoot: tempRoot(),
     })
@@ -97,7 +97,7 @@ describe('GithubUpdateCoordinator', () => {
     const empty = new GithubUpdateCoordinator({
       repo: 'YHanG505/halyard',
       publish: state => state,
-      fetchImpl: (async () => new Response('{}', { status: 404 })) as unknown as typeof fetch,
+      fetchImpl: async () => new Response('{}', { status: 404 }),
       currentVersion: '0.1.5-rc.2',
       downloadRoot: tempRoot(),
     })
@@ -106,7 +106,7 @@ describe('GithubUpdateCoordinator', () => {
     const failing = new GithubUpdateCoordinator({
       repo: 'YHanG505/halyard',
       publish: state => state,
-      fetchImpl: (async () => { throw new Error('offline') }) as unknown as typeof fetch,
+      fetchImpl: async () => { throw new Error('offline') },
       currentVersion: '0.1.5-rc.2',
       downloadRoot: tempRoot(),
     })

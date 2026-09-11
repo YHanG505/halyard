@@ -13,8 +13,8 @@ afterEach(() => {
   delete (globalThis as { dshDesktop?: unknown }).dshDesktop
 })
 
-function translate(key: keyof typeof zh, params?: Record<string, unknown>): string {
-  return zh[key].replace(/\{(\w+)\}/gu, (_match, name: string) => String(params?.[name] ?? ''))
+function translate(key: keyof typeof zh, params?: Record<string, string>): string {
+  return zh[key].replace(/\{(\w+)\}/gu, (_match, name: string) => params?.[name] ?? '')
 }
 
 function props(): UpdateActionProps {
@@ -71,7 +71,7 @@ describe('UpdateAction', () => {
   it('labels an in-flight install and disables the button', async () => {
     const bench = mount({ phase: 'available', version: '0.1.5-halyard.2' })
     await screen.findByRole('button')
-    bench.listeners.forEach(listener => { listener({ phase: 'installing', version: '0.1.5-halyard.2' }) })
+    bench.listeners.forEach((listener) => { listener({ phase: 'installing', version: '0.1.5-halyard.2' }) })
     const button = await screen.findByRole('button', { name: '正在更新…' })
     expect((button as HTMLButtonElement).disabled).toBe(true)
   })

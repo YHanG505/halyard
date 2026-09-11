@@ -181,7 +181,7 @@ async function main(): Promise<void> {
   await app.whenReady()
   if (process.platform === 'darwin') {
     const assets = app.isPackaged ? join(process.resourcesPath, 'icons') : join(entryDir, '../assets')
-    const disposeIcon = installDockIcon(nativeTheme, path => { app.dock?.setIcon(path) }, assets)
+    const disposeIcon = installDockIcon(nativeTheme, (path) => { app.dock?.setIcon(path) }, assets)
     app.once('will-quit', disposeIcon)
   }
 

@@ -38,15 +38,11 @@ function resolveRepo(): string {
 
 /** Send one GitHub API request with the bearer token. */
 async function github(url: string, token: string, init: RequestInit = {}): Promise<Response> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      accept: 'application/vnd.github+json',
-      authorization: `Bearer ${token}`,
-      'user-agent': 'DeepSeek-Halyard',
-      ...init.headers,
-    },
-  })
+  const headers = new Headers(init.headers)
+  headers.set('accept', 'application/vnd.github+json')
+  headers.set('authorization', `Bearer ${token}`)
+  headers.set('user-agent', 'DeepSeek-Halyard')
+  const response = await fetch(url, { ...init, headers })
   return response
 }
 

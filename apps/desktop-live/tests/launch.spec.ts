@@ -166,7 +166,7 @@ describe('waitForHealth', () => {
     await expect(waitForHealth('http://127.0.0.1:1', {
       timeoutMs: 1_000,
       intervalMs: 1,
-      fetchImpl: fetchImpl as typeof fetch,
+      fetchImpl: fetchImpl,
       sleepImpl,
     })).resolves.toBe('http://127.0.0.1:1')
     expect(calls).toBe(3)
@@ -178,7 +178,7 @@ describe('waitForHealth', () => {
     await expect(waitForHealth('http://127.0.0.1:1', {
       timeoutMs: 50,
       intervalMs: 1,
-      fetchImpl: fetchImpl as typeof fetch,
+      fetchImpl: fetchImpl,
       sleepImpl,
       nowImpl: () => { now += 100; return now },
     })).rejects.toThrow(/health check timed out/u)

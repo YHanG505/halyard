@@ -210,8 +210,8 @@ export abstract class SessionPersistence extends Service {
    * @param options - optional cancellation.
    * @returns true when the session existed and its artifacts were removed.
    */
-  async delete(_id: SessionId, _options?: SessionPersistenceDeleteOptions): Promise<boolean> {
-    return false
+  delete(_id: SessionId, _options?: SessionPersistenceDeleteOptions): Promise<boolean> {
+    return Promise.resolve(false)
   }
 }
 
