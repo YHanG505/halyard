@@ -548,9 +548,12 @@ describe('SessionHistoryController', () => {
     expect(inspect).not.toHaveBeenCalled()
   })
 
-  it('rejects incomplete cold metadata before serving a source', async () => {
+  it('serves a cold project-free source whose header carries no cwd', async () => {
+    // A header without cwd is a complete project-free Session, not torn
+    // metadata: the reader must serve its (empty) history instead of
+    // reporting session/not-found.
     const first = await setup()
-    const sessionId = SessionId('incomplete')
+    const sessionId = SessionId('project-free')
     const address = { kind: 'session' as const, sessionId }
     const firstHeader: SessionHeader = { version: SESSION_FORMAT_VERSION, id: sessionId, createdAt: 1, isSeeded: false }
     first.ctx.provide('sessionPersistence', testSessionPersistence(first.ctx, {
@@ -562,8 +565,9 @@ describe('SessionHistoryController', () => {
       }),
     }) as never)
     await expect(first.transport.page({ address, throughSeq: -1 }, signal()))
-      .rejects.toMatchObject({ code: 'session/not-found' })
+      .resolves.toMatchObject({ records: [], hasMore: false })
 
+    // The inspected header stays authoritative when the list summary omits cwd.
     const second = await setup()
     const listed: SessionHeader = { version: SESSION_FORMAT_VERSION, id: sessionId, createdAt: 1, cwd: '/workspace', isSeeded: false }
     const inspected: SessionHeader = { version: SESSION_FORMAT_VERSION, id: sessionId, createdAt: 1, isSeeded: false }
@@ -576,7 +580,7 @@ describe('SessionHistoryController', () => {
       }),
     }) as never)
     await expect(second.transport.page({ address, throughSeq: -1 }, signal()))
-      .rejects.toMatchObject({ code: 'session/not-found' })
+      .resolves.toMatchObject({ records: [], hasMore: false })
   })
 
   it('serves cold ordinary history and validates every durable subagent descriptor state', async () => {
