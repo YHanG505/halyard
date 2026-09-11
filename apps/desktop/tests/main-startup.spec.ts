@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { join } from 'node:path'
+import { Menu } from 'electron'
 import { DESKTOP_IPC } from '../src/ipc.ts'
 
 const harness = await vi.hoisted(async () => {
@@ -155,6 +156,15 @@ afterEach(async () => {
 })
 
 describe('desktop main startup', () => {
+  it('installs a standard Edit menu so clipboard shortcuts reach the renderer', async () => {
+    await import('../src/main.ts')
+    await harness.preparing.promise
+    const template = vi.mocked(Menu).buildFromTemplate.mock.calls.at(-1)?.[0] as
+      | ReadonlyArray<{ role?: string }>
+      | undefined
+    expect(template?.some(item => item.role === 'editMenu')).toBe(true)
+  })
+
   it('exits with a diagnostic when both initialization and emergency navigation fail', async () => {
     const exited = Promise.withResolvers<undefined>()
     vi.spyOn(harness.app, 'getLocale').mockImplementationOnce(() => { throw new Error('locale unavailable') })
