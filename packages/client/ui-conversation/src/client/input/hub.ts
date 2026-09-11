@@ -219,6 +219,11 @@ export class InputHub implements SessionInputResolver {
     if (text === '' && attachmentIds.length === 0) return Promise.resolve({ kind: 'success' })
     const send = (target: SessionFace): Promise<SubmitOutcome> =>
       this.conversation().sendSession(target, text, attachmentIds, mode, signal)
+    // The local submission echo must enter the session snapshot synchronously
+    // with the send gesture, so only a real promotion pays the async hop.
+    if (text.trim() === '' || !isProjectFreeFirstSend(this.sessions().list.getSnapshot().byId[session.sessionId])) {
+      return send(session)
+    }
     return this.promoteProjectFree(session, text, attachmentIds).then(
       (target) => {
         if (target === undefined) return send(session)
