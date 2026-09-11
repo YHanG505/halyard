@@ -29,9 +29,22 @@ describe('account spend estimate', () => {
     expect(estimateAccountSpend(inside, 'today', now)).toEqual({ spentCny: 10, since: now - 6 * 3_600_000 })
   })
 
-  it('clamps top-ups to zero and rejects unusable history', () => {
+  it('reports zero spend for a window that only received a top-up', () => {
     expect(estimateAccountSpend([sample(now - day, 50), sample(now, 80)], 'today', now))
       .toEqual({ spentCny: 0, since: now - day })
+  })
+
+  it('accumulates spend across a mid-window top-up', () => {
+    const toppedUp = [
+      sample(now - 8 * 3_600_000, 100),
+      sample(now - 6 * 3_600_000, 90),
+      sample(now - 4 * 3_600_000, 140),
+      sample(now - 2 * 3_600_000, 130),
+    ]
+    expect(estimateAccountSpend(toppedUp, 'today', now)).toEqual({ spentCny: 20, since: now - 8 * 3_600_000 })
+  })
+
+  it('rejects unusable history', () => {
     expect(estimateAccountSpend([sample(now - 3_600_000, 80)], 'today', now)).toBeUndefined()
     expect(estimateAccountSpend([
       sample(now - day, 50, 'USD'),

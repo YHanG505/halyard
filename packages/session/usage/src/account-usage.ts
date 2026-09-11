@@ -79,7 +79,9 @@ export function recordBalanceSample(sample: BalanceSample, path: string = balanc
  * Estimate the account's spend over one usage window from balance snapshots.
  * The reference is the last snapshot before the window when one exists,
  * otherwise the earliest snapshot inside the window (the estimate then starts
- * there); `all` starts at the earliest retained snapshot.
+ * there); `all` starts at the earliest retained snapshot. Every balance
+ * decrease between consecutive observations adds to the estimate, so a top-up
+ * inside the window never erases the spend observed around it.
  * @param history - persisted balance samples.
  * @param range - the usage window the estimate follows.
  * @param now - current epoch milliseconds.
@@ -99,6 +101,12 @@ export function estimateAccountSpend(
     : (ordered.filter(sample => sample.time < start).at(-1)
       ?? ordered.find(sample => sample.time >= start && sample.time < current.time))
   if (reference === undefined || reference.currency !== current.currency) return undefined
-  const spent = reference.totalBalance - current.totalBalance
-  return { spentCny: spent > 0 ? spent : 0, since: reference.time }
+  let spent = 0
+  let previous = reference
+  for (const sample of ordered) {
+    if (sample.time <= reference.time || sample.time > current.time) continue
+    spent += Math.max(0, previous.totalBalance - sample.totalBalance)
+    previous = sample
+  }
+  return { spentCny: spent, since: reference.time }
 }
