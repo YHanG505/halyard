@@ -10,7 +10,7 @@
  * @module @deepseek-ai/dsh-desktop-live/install-macos
  */
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -59,7 +59,11 @@ if (!existsSync(iconSource)) {
 rmSync(appRoot, { recursive: true, force: true })
 cpSync(electronApp, appRoot, { recursive: true, verbatimSymlinks: true })
 mkdirSync(entryDir, { recursive: true })
-cpSync(iconSource, join(resources, 'icon.icns'))
+cpSync(iconSource, join(resources, 'halyard-light.icns'))
+mkdirSync(join(resources, 'icons'), { recursive: true })
+for (const name of ['icon-light.png', 'icon-dark.png']) {
+  cpSync(join(packageDir, 'assets', name), join(resources, 'icons', name))
+}
 writeFileSync(join(entryDir, 'package.json'), JSON.stringify({
   name: 'dsh-desktop', productName: appName, version: '0.1.0', type: 'module', main: 'boot.mjs',
 }, null, 2) + '\n')
@@ -81,7 +85,9 @@ for (const [key, value] of Object.entries({
   CFBundleDisplayName: appName,
   CFBundleName: appName,
   CFBundleIdentifier: 'io.github.yhang505.halyard',
-  CFBundleIconFile: 'icon.icns',
+  CFBundleIconFile: 'halyard-light.icns',
+  CFBundleShortVersionString: '0.1.0',
+  CFBundleVersion: '0.1.1',
 })) {
   const result = spawnSync('/usr/bin/plutil', ['-replace', key, '-string', value, plist], { stdio: 'inherit' })
   if (result.status !== 0) throw new Error(`install-macos: failed to set ${key}`)
@@ -101,14 +107,26 @@ if (buildOnly) {
   process.exit(0)
 }
 
+const staging = mkdtempSync(join(dirname(applicationsPath), '.halyard-install-'))
+const incoming = join(staging, appDirName)
+const previous = join(staging, 'previous.app')
 try {
-  rmSync(applicationsPath, { recursive: true, force: true })
-  cpSync(appRoot, applicationsPath, { recursive: true, verbatimSymlinks: true })
-  console.log(`install-macos: installed ${applicationsPath}`)
-  console.log('Double-click it from Applications, Spotlight, or Launchpad.')
-} catch (error) {
-  const reason = error instanceof Error ? error.message : String(error)
-  console.error(`install-macos: could not write ${applicationsPath}: ${reason}`)
-  console.error('Try: sudo node scripts/install-macos.mjs  (from apps/desktop)')
-  process.exit(1)
+  cpSync(appRoot, incoming, { recursive: true, verbatimSymlinks: true })
+  const verified = spawnSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', incoming], { stdio: 'inherit' })
+  if (verified.status !== 0) throw new Error('staged application signature verification failed')
+  if (existsSync(applicationsPath)) renameSync(applicationsPath, previous)
+  try {
+    renameSync(incoming, applicationsPath)
+  } catch (error) {
+    if (existsSync(previous)) renameSync(previous, applicationsPath)
+    throw error
+  }
+  const registered = spawnSync(
+    '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister',
+    ['-f', applicationsPath], { stdio: 'inherit' },
+  )
+  if (registered.status !== 0) throw new Error('installed application registration failed')
+  console.log(`install-macos: installed and registered ${applicationsPath}`)
+} finally {
+  rmSync(staging, { recursive: true, force: true })
 }
