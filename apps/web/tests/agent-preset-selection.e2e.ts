@@ -396,9 +396,9 @@ describe('web e2e: agent-preset selection', () => {
     expect(snapshot).toContain('button "1 subagent"')
     expect(snapshot.indexOf('button "1 subagent"')).toBeLessThan(snapshot.indexOf('Minimal mode'))
     expect(snapshot.indexOf('Minimal mode')).toBeLessThan(snapshot.indexOf('button "More actions"'))
-    // Static chrome, not a control: the header can only report a composition
-    // the host would refuse to change.
-    expect(snapshot).not.toContain('button "Minimal mode"')
+    // The header reports the composition as a chip: the host still refuses to
+    // change it after the first turn, and the chip answers with the refusal.
+    expect(snapshot).toContain('button "Minimal mode"')
   })
 
   it('drove every surface without a page error or a stream warning', () => {

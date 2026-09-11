@@ -4,8 +4,10 @@
   - button "1 subagent":
     - text: 1 subagent
     - img
-- img
-- text: Minimal mode
+- button "Copy Session ID": agent-preset-selection-web-e2e
+- button "Minimal mode":
+  - img
+  - text: Minimal mode
 - button "More actions":
   - img
 - button "Open right sidebar":

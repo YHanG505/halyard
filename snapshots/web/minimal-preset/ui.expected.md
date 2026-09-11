@@ -1,8 +1,10 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Use the bash tool to" [disabled]
-  - img
-  - text: Minimal mode
+  - button "Copy Session ID": minimal-preset-smoke
+  - button "Minimal mode":
+    - img
+    - text: Minimal mode
   - button "More actions":
     - img
   - button "Open right sidebar":

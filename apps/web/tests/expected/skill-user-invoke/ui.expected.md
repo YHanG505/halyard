@@ -1,8 +1,10 @@
 - banner:
   - navigation "Session hierarchy":
     - button "/user-invoke-demo @\"meeting notes.md\" an" [disabled]
-  - img
-  - text: Standard mode
+  - button "Copy Session ID": session-{{uuid}}
+  - button "Standard mode":
+    - img
+    - text: Standard mode
   - button "More actions":
     - img
   - button "Open right sidebar":

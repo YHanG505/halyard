@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Use the ask_user_question tool to" [disabled]
+  - button "Copy Session ID": {{seededId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

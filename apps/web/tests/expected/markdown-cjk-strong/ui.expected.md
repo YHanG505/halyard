@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - button "CJK strong emphasis" [disabled]
+  - button "Copy Session ID": {{seededId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

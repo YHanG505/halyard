@@ -17,6 +17,11 @@
     - img
     - text: workspace
   - treeitem "New Session" [selected]
+- text: Today ¥0.00
+- button "Refresh"
+- text: 0 Requests · 0 tokens Balance Unavailable
+- link "Top up":
+  - /url: https://platform.deepseek.com/top_up
 - button "Settings":
   - img
   - text: Settings

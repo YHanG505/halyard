@@ -6,8 +6,10 @@
     - button "1 subagent":
       - text: 1 subagent
       - img
-  - img
-  - text: Standard mode
+  - button "Copy Session ID": {{uuid}}
+  - button "Standard mode":
+    - img
+    - text: Standard mode
   - button "More actions":
     - img
   - button "Open right sidebar":

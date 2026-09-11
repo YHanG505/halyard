@@ -1,8 +1,10 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Reply with a one-sentence description" [disabled]
-  - img
-  - text: Standard mode
+  - button "Copy Session ID": session-{{uuid}}
+  - button "Standard mode":
+    - img
+    - text: Standard mode
   - button "More actions":
     - img
   - button "Open right sidebar":
@@ -21,7 +23,6 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- paragraph: partial
 - status: Deep diving...
 - list:
   - listitem:

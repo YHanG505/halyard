@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Markdown image policy" [disabled]
+  - button "Copy Session ID": {{seededId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

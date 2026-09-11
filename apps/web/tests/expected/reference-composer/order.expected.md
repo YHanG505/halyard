@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Reference order target" [disabled]
+  - button "Copy Session ID": {{targetId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

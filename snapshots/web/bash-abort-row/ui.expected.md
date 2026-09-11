@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - 'button "Run two shell commands: wait" [disabled]'
+  - button "Copy Session ID": {{seededId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

@@ -13,6 +13,12 @@
     - button "Agent 预设":
       - img
       - text: Agent 预设
+    - button "用量":
+      - img
+      - text: 用量
+    - button "归档对话":
+      - img
+      - text: 归档对话
   - button "打开配置文件"
   - button "关闭":
     - img
@@ -48,3 +54,7 @@
   - button "排队发送":
     - text: 排队发送
     - img
+  - text: 打开应用时创建新对话 关闭后将恢复上次打开的对话。
+  - switch "打开应用时创建新对话"
+  - text: 创建新对话时打开默认项目 关闭时新对话为无项目对话。
+  - switch "创建新对话时打开默认项目"

@@ -1,8 +1,10 @@
 - banner:
   - navigation "Session hierarchy":
     - 'button "Using ONE run_code program: run" [disabled]'
-  - img
-  - text: PTC mode
+  - button "Copy Session ID": session-{{uuid}}
+  - button "PTC mode":
+    - img
+    - text: PTC mode
   - button "More actions":
     - img
   - button "Open right sidebar":

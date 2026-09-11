@@ -1,6 +1,7 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Use the read tool twice" [disabled]
+  - button "Copy Session ID": {{seededId}}
   - button "More actions":
     - img
   - button "Open right sidebar":

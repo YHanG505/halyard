@@ -12,8 +12,10 @@
 - banner:
   - navigation "Session hierarchy":
     - button "Review deepseek-harness/deepseek-harness#314" [disabled]
-  - img
-  - text: Standard mode
+  - button "Copy Session ID": webhook-{{uuid}}
+  - button "Standard mode":
+    - img
+    - text: Standard mode
   - button "More actions":
     - img
   - button "Open right sidebar":

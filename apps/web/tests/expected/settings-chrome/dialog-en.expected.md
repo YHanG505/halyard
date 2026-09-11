@@ -13,6 +13,12 @@
     - button "Agent presets":
       - img
       - text: Agent presets
+    - button "Usage":
+      - img
+      - text: Usage
+    - button "Archived":
+      - img
+      - text: Archived
   - button "Open configuration file"
   - button "Close":
     - img
@@ -48,3 +54,7 @@
   - button "Queue":
     - text: Queue
     - img
+  - text: Open a new conversation when the app starts When off, the conversation open before closing is restored.
+  - switch "Open a new conversation when the app starts"
+  - text: Open a default project for new conversations When off, new conversations start without a project.
+  - switch "Open a default project for new conversations"
