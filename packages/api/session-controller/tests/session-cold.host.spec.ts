@@ -76,7 +76,7 @@ function conversationEvents(): SessionEvent[] {
 }
 
 describe('sessions.list cold merge', () => {
-  it('uses a predecessor title hint with zero cold stat or body reads', async () => {
+  it('uses a predecessor title hint while probing metadata-less cold logs for blankness', async () => {
     const ctx = new Context()
     await ctx.plugin(SessionStore)
     const metas = [header('legacy-title', 100), header('uncached', 200)]
@@ -121,8 +121,9 @@ describe('sessions.list cold merge', () => {
         projections: { asOfSeq: -1, values: { title: 'Cached predecessor title' } },
       }),
     ])
-    expect(stat).not.toHaveBeenCalled()
-    expect(inspect).not.toHaveBeenCalled()
+    // The predecessor title still avoids activating an Agent, but a
+    // metadata-less row is stat-probed so a seed-only Session stays hidden.
+    expect(stat).toHaveBeenCalledTimes(2)
     expect(observe).not.toHaveBeenCalled()
   })
 
