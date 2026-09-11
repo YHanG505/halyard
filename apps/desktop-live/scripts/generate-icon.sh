@@ -1,12 +1,15 @@
 #!/bin/sh
-# Export all macOS icon sizes from the glass artwork in assets/icon-master.png.
+# Export all macOS icon sizes from the glass artwork in assets/icon-dark-master.png
+# and assets/icon-light-master.png.
 # Requires the macOS sips and iconutil utilities.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-sips -z 1024 1024 "$DIR/assets/icon-master.png" --out "$DIR/assets/icon.png" >/dev/null
+sips -z 1024 1024 "$DIR/assets/icon-dark-master.png" --out "$DIR/assets/icon-dark.png" >/dev/null
+sips -z 1024 1024 "$DIR/assets/icon-light-master.png" --out "$DIR/assets/icon-light.png" >/dev/null
+cp "$DIR/assets/icon-light.png" "$DIR/assets/icon.png"
 
 mkdir -p "$WORK/AppIcon.iconset"
 for s in 16 32 128 256 512; do

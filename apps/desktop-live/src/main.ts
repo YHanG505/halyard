@@ -10,7 +10,8 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeTheme } from 'electron'
+import { installDockIcon } from './icon.ts'
 import {
   buildDshWebSpawn,
   buildRebuildSpawn,
@@ -41,16 +42,6 @@ const launchFs = {
 
 /** This file's directory (apps/desktop/src), used as the repo-walk start. */
 const entryDir = dirname(fileURLToPath(import.meta.url))
-
-/** The same artwork supplies the bundle icon and the source-mode Dock icon. */
-const dockIconPath = join(entryDir, '../assets/icon.png')
-
-/** Apply the product artwork when running Electron directly from source. */
-function applyAppIcon(): void {
-  if (process.platform === 'darwin' && launchFs.exists(dockIconPath)) {
-    app.dock?.setIcon(dockIconPath)
-  }
-}
 
 let server: ChildProcess | undefined
 let killTimer: ReturnType<typeof setTimeout> | undefined
@@ -188,7 +179,11 @@ async function main(): Promise<void> {
   })
 
   await app.whenReady()
-  applyAppIcon()
+  if (process.platform === 'darwin') {
+    const assets = app.isPackaged ? join(process.resourcesPath, 'icons') : join(entryDir, '../assets')
+    const disposeIcon = installDockIcon(nativeTheme, path => { app.dock?.setIcon(path) }, assets)
+    app.once('will-quit', disposeIcon)
+  }
 
   const repoRoot = resolveRepoRoot(entryDir, process.env, launchFs)
   if (shouldRebuild(process.env)) {
