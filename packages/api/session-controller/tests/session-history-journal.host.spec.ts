@@ -114,6 +114,26 @@ describe('Session history raw journal', () => {
     await ctx.fiber.dispose()
   })
 
+  it('opens a project-free Session whose header carries no cwd', async () => {
+    const { ctx } = await harness()
+    // Project-free Sessions are legitimate: a header without cwd must read as
+    // a found Session, not as session/not-found.
+    const session = ctx.sessions.create(undefined)
+    const history = new SessionHistoryController(ctx, (observation) => { observation[Symbol.dispose]() })
+    const abort = new AbortController()
+    const iterator = history.follow({
+      address: { kind: 'session', sessionId: session.id },
+    }, abort.signal)[Symbol.asyncIterator]()
+
+    await expect(iterator.next()).resolves.toMatchObject({
+      done: false,
+      value: { type: 'snapshot' },
+    })
+    abort.abort()
+    await iterator.next()
+    await ctx.fiber.dispose()
+  })
+
   it('filters foreign and opening-baseline frames buffered during the source observation', async () => {
     const { ctx } = await harness()
     const session = ctx.sessions.create(undefined, { meta: { cwd: '/workspace' } })
